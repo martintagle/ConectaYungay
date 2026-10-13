@@ -28,11 +28,10 @@ ConectaYungay.Data.RECORRIDOS = [
             { orden: 1, lugar: "Cité Las Palmas" },
             { orden: 2, lugar: "Museo de la Memoria y los Derechos Humanos",
               via: [[-33.440328, -70.679903]] },                              // Matucana / Catedral
-            { orden: 3, lugar: "Pasaje Adriana Cousiño",
+            { orden: 3, lugar: "Museo de la Educación Gabriela Mistral",
               via: [[-33.440218, -70.678785],                                 // Catedral / Chacabuco
-                    [-33.441447, -70.678676],                                 // Chacabuco / Compañía
-                    [-33.441281, -70.677144]] },                              // Compañía / Adriana Cousiño
-            { orden: 4, lugar: "Museo de la Educación Gabriela Mistral",
+                    [-33.441447, -70.678676]] },                              // Chacabuco / Compañía
+            { orden: 4, lugar: "Pasaje Adriana Cousiño",
               via: [[-33.441281, -70.677144]] }                               // Compañía / Adriana Cousiño
         ]
     },
@@ -41,16 +40,14 @@ ConectaYungay.Data.RECORRIDOS = [
         nombre: 'Ruta B',
         paradas: [
             { orden: 1, lugar: "Espacio 330" },
-            { orden: 2, lugar: "Museo del Sonido",
+            { orden: 2, lugar: "Cité Lucrecia Valdés de Barros Borgoño",
               via: [[-33.441215, -70.676563],                                 // Maipú / Compañía
-                    [-33.441163, -70.676089],                                 // Compañía / Lucrecia Valdés
-                    [-33.442368, -70.675980]] },                              // Lucrecia Valdés / Huérfanos
-            { orden: 3, lugar: "Yungay Histórico" },
-            { orden: 4, lugar: "Cité Lucrecia Valdés de Barros Borgoño",
-              via: [[-33.442368, -70.675980]] },                              // Huérfanos / Lucrecia Valdés
+                    [-33.441163, -70.676089]] },                              // Compañía / Lucrecia Valdés
+            { orden: 3, lugar: "Museo del Sonido",
+              via: [[-33.442368, -70.675980]] },                              // Lucrecia Valdés / Huérfanos
+            { orden: 4, lugar: "Yungay Histórico" },
             { orden: 5, lugar: "Club Yungay",
-              via: [[-33.442368, -70.675980],                                 // Lucrecia Valdés / Huérfanos
-                    [-33.442323, -70.675466],                                 // Huérfanos / Esperanza
+              via: [[-33.442323, -70.675466],                                 // Huérfanos / Esperanza
                     [-33.443193, -70.675415]] }                               // Esperanza / Portales
         ]
     },
@@ -80,10 +77,10 @@ ConectaYungay.Data.RECORRIDOS = [
         nombre: 'Ruta D',
         paradas: [
             { orden: 1, lugar: "Museo de Arte Contemporáneo (MAC)" },
-            { orden: 2, lugar: "Museo Taller",
+            { orden: 2, lugar: "DecoCalen",
               via: [[-33.441578, -70.679792]] },                              // Matucana / Compañía
             { orden: 3, lugar: "Casona Compañía" },
-            { orden: 4, lugar: "DecoCalen" },
+            { orden: 4, lugar: "Museo Taller" },
             { orden: 5, lugar: "Yungay Histórico",
               via: [[-33.440851, -70.673313],                                 // Compañía / Rafael Sotomayor
                     [-33.442048, -70.673201]] }                               // Rafael Sotomayor / Huérfanos
