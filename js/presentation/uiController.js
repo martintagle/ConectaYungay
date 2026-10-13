@@ -14,6 +14,7 @@ ConectaYungay.UI = (function () {
     let discountsList = [];
     let discountsRequest = 0; // descarta respuestas de descuentos de un hito anterior
     let currentOrigin = null;
+    let routeGenerated = false; // el recorrido actual ya se trazó: el próximo clic pasa al siguiente
     let mapInitialized = false;
 
     // Referencias al DOM — se llenan en init()
@@ -108,34 +109,52 @@ ConectaYungay.UI = (function () {
             }
         }, 150);
 
-        // Detener un recorrido que esté animándose del origen anterior y vaciar sus datos
-        try { ConectaYungay.MapRenderer.clearRoute(); } catch (e) { }
-        routeNodes = [];
-
-        // Cargar nodos de la ruta (la capa de negocio alterna A/B por estación)
+        // Cargar nodos de la ruta (la capa de negocio alterna los recorridos por estación)
         try {
-            const recorrido = ConectaYungay.Service.elegirRecorrido(origin);
-            DOM.routeName.textContent = `${recorrido.nombre} desde ${displayName}`;
-            routeNodes = ConectaYungay.Service.getRoute(recorrido.id);
-            if (!routeNodes.length) {
-                throw new Error('La ruta no tiene hitos con coordenadas válidas.');
-            }
-            DOM.btnGenerate.removeAttribute('disabled');
-            DOM.btnDownload.setAttribute('disabled', 'true');
-            DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Haz clic en "Generar Recorrido" para trazar la ruta en el mapa.</p>';
-            discountsRequest++;
-            DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Los descuentos aparecerán al iniciar el recorrido.</p>';
-            DOM.selectedNodeLabel.textContent = 'Ninguno';
+            loadRoute(ConectaYungay.Service.elegirRecorrido(origin));
         } catch (e) {
             console.error('Error al cargar ruta:', e);
             DOM.nodesContainer.innerHTML = `<p class="error-text">No se pudo cargar la ruta para ${displayName}.</p>`;
         }
     }
 
+    /**
+     * Carga los hitos de un recorrido y deja la UI lista para trazarlo.
+     * Detiene el recorrido que se esté animando y vacía sus datos.
+     */
+    function loadRoute(recorrido) {
+        const displayName = currentOrigin === 'cumming' ? 'Metro Cumming' : 'Metro Quinta Normal';
+        try { ConectaYungay.MapRenderer.clearRoute(); } catch (e) { }
+        routeNodes = [];
+        routeGenerated = false;
+
+        DOM.routeName.textContent = `${recorrido.nombre} desde ${displayName}`;
+        routeNodes = ConectaYungay.Service.getRoute(recorrido.id);
+        if (!routeNodes.length) {
+            throw new Error('La ruta no tiene hitos con coordenadas válidas.');
+        }
+        DOM.btnGenerate.removeAttribute('disabled');
+        DOM.btnDownload.setAttribute('disabled', 'true');
+        DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Haz clic en "Generar Recorrido" para trazar la ruta en el mapa.</p>';
+        discountsRequest++;
+        DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Los descuentos aparecerán al iniciar el recorrido.</p>';
+        DOM.selectedNodeLabel.textContent = 'Ninguno';
+    }
+
     // ─────────────────────────────────────────────
     //  ANIMACIÓN DEL RECORRIDO
     // ─────────────────────────────────────────────
     function startRouteAnimation() {
+        // Si ya se trazó un recorrido, el botón pasa al siguiente de la estación (circular)
+        if (routeGenerated) {
+            try {
+                loadRoute(ConectaYungay.Service.siguienteRecorrido(currentOrigin));
+            } catch (e) {
+                console.error('Error al cargar el siguiente recorrido:', e);
+                DOM.nodesContainer.innerHTML = '<p class="error-text">No se pudo cargar el siguiente recorrido.</p>';
+                return;
+            }
+        }
         if (!routeNodes.length) return;
 
         DOM.btnGenerate.setAttribute('disabled', 'true');
@@ -150,6 +169,7 @@ ConectaYungay.UI = (function () {
                 DOM.btnGenerate.removeAttribute('disabled');
             }
         }, 350);
+        if (started) routeGenerated = true;
 
         // Si el mapa no está listo, no hay animación que reactive el botón: hacerlo aquí
         if (!started) {
@@ -168,9 +188,11 @@ ConectaYungay.UI = (function () {
             <div class="node-number">${index + 1}</div>
             <div class="node-details"><span class="node-name">${safeName}</span></div>
         `;
+        // Las estaciones de metro no tienen cartel informativo: solo se seleccionan
+        if (node.isStation) el.classList.add('is-station');
         el.addEventListener('click', () => {
             selectActiveNode(index);
-            ConectaYungay.PlaceInfo.open(node);
+            if (!node.isStation) ConectaYungay.PlaceInfo.open(node);
         });
         DOM.nodesContainer.appendChild(el);
         DOM.nodesContainer.scrollTop = DOM.nodesContainer.scrollHeight;
@@ -275,6 +297,7 @@ ConectaYungay.UI = (function () {
         window.history.pushState({ path: cleanUrl }, '', cleanUrl);
         currentOrigin = null;
         routeNodes = [];
+        routeGenerated = false;
         try { ConectaYungay.MapRenderer.clearRoute(); } catch (e) { }
         ConectaYungay.PlaceInfo.close();
         showScreen('welcome');

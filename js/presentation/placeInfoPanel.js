@@ -18,6 +18,7 @@ ConectaYungay.PlaceInfo = (function () {
         if (DOM.dialog) return;
         DOM.dialog = document.getElementById('place-dialog');
         DOM.title = document.getElementById('place-dialog-title');
+        DOM.text = document.getElementById('place-dialog-text');
         DOM.close = document.getElementById('place-dialog-close');
         DOM.more = document.getElementById('place-dialog-more');
         DOM.moreBtn = document.getElementById('place-dialog-more-btn');
@@ -32,7 +33,7 @@ ConectaYungay.PlaceInfo = (function () {
 
     /**
      * Abre el cartel de un lugar del recorrido.
-     * @param {{name: string}} node - Hito del recorrido
+     * @param {{name: string, description: string}} node - Hito del recorrido
      */
     function open(node) {
         cacheDOM();
@@ -40,6 +41,9 @@ ConectaYungay.PlaceInfo = (function () {
         moreRegistered = false;
 
         DOM.title.textContent = node.name;
+        // Lugares sin texto todavía (estaciones de metro, etc.): se oculta el párrafo
+        DOM.text.textContent = node.description || '';
+        DOM.text.classList.toggle('hidden', !node.description);
         DOM.more.classList.remove('expanded');
         DOM.moreBtn.classList.remove('hidden');
 

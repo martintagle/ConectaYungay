@@ -40,6 +40,26 @@ ConectaYungay.Service = (function () {
         return elegidos[estacion];
     }
 
+    /**
+     * Pasa al recorrido siguiente de la estación, en forma circular (A, B, C, A…).
+     * También avanza el conteo guardado, para que la próxima visita siga desde aquí.
+     * @param {'cumming'|'quintanormal'} estacion
+     * @returns {{id, estacion, nombre}}
+     */
+    function siguienteRecorrido(estacion) {
+        const actual = elegirRecorrido(estacion);
+        const opciones = RECORRIDOS.filter(r => r.estacion === estacion);
+        const indice = opciones.findIndex(r => r.id === actual.id);
+        const recorrido = opciones[(indice + 1) % opciones.length];
+
+        const visitas = leerVisitas();
+        visitas[estacion] = (visitas[estacion] || 0) + 1;
+        guardarVisitas(visitas);
+
+        elegidos[estacion] = { id: recorrido.id, estacion, nombre: recorrido.nombre };
+        return elegidos[estacion];
+    }
+
     function leerVisitas() {
         try {
             return JSON.parse(localStorage.getItem(VISITAS_KEY)) || {};
@@ -59,7 +79,7 @@ ConectaYungay.Service = (function () {
      * Un hito sin coordenadas se omite y se registra como error: no se dibuja
      * en un punto inventado que haría ver una ruta falsa.
      * @param {string} recorridoId - id del recorrido (ej. 'cumming-a')
-     * @returns {Array<{name, address, lat, lng}>}
+     * @returns {Array<{name, address, description, isStation, lat, lng}>}
      */
     function getRoute(recorridoId) {
         const recorrido = RECORRIDOS.find(r => r.id === recorridoId);
@@ -76,7 +96,7 @@ ConectaYungay.Service = (function () {
                     console.error(`[Service] Sin coordenadas para el hito: "${parada.lugar}". Se omite.`);
                     return nodes;
                 }
-                nodes.push({ name: parada.lugar, address: c.direccion, lat: c.lat, lng: c.lng });
+                nodes.push({ name: parada.lugar, address: c.direccion, description: c.descripcion || '', isStation: !!c.esEstacion, lat: c.lat, lng: c.lng });
                 return nodes;
             }, []);
     }
@@ -210,6 +230,7 @@ ConectaYungay.Service = (function () {
 
     return {
         elegirRecorrido,
+        siguienteRecorrido,
         getRoute,
         getDiscounts,
         calculateHaversineDistance,
