@@ -6,82 +6,63 @@
 window.ConectaYungay = window.ConectaYungay || {};
 
 ConectaYungay.Service = (function () {
-    const { LUGARES, RECORRIDOS, DESCUENTOS, DISTANCIAS_A_PIE } = ConectaYungay.Data;
-    const VISITAS_KEY = 'conectayungay_visitas_por_estacion';
-
-    // Recorrido ya elegido en esta carga de la página, por estación. Así,
-    // volver a elegir la misma estación con "Cambiar Origen" no salta de ruta.
-    const elegidos = {};
+    const { LUGARES, RECORRIDOS, DESCUENTOS, DISTANCIAS_A_PIE, TRAZADOS } = ConectaYungay.Data;
 
     /**
-     * Elige el recorrido para una estación, alternando entre los recorridos de
-     * esa estación cada vez que el visitante abre la página (A, B, A, B…).
-     * El conteo se guarda en el navegador del visitante (localStorage); si no
-     * está disponible (modo incógnito, datos borrados) se entrega el primero.
-     * @param {'cumming'|'quintanormal'} estacion
-     * @returns {{id, estacion, nombre}}
+     * Devuelve los recorridos con su punto de partida (la primera parada).
+     * "metros" es el largo a pie del recorrido, o null si no está precalculado.
+     * @returns {Array<{id, nombre, paradas, metros, inicio: {name, lat, lng}}>}
      */
-    function elegirRecorrido(estacion) {
-        if (elegidos[estacion]) return elegidos[estacion];
-
-        const opciones = RECORRIDOS.filter(r => r.estacion === estacion);
-        if (!opciones.length) {
-            throw new Error(`No hay recorridos para la estación "${estacion}".`);
-        }
-
-        const visitas = leerVisitas();
-        const previas = visitas[estacion] || 0;
-        const recorrido = opciones[previas % opciones.length];
-
-        visitas[estacion] = previas + 1;
-        guardarVisitas(visitas);
-
-        elegidos[estacion] = { id: recorrido.id, estacion, nombre: recorrido.nombre };
-        return elegidos[estacion];
+    function listarRutas() {
+        return RECORRIDOS.reduce((rutas, r) => {
+            const paradas = paradasConLugar(r.id);
+            if (!paradas.length) return rutas;
+            const { parada, lugar } = paradas[0];
+            rutas.push({
+                id: r.id,
+                nombre: r.nombre,
+                paradas: paradas.length,
+                metros: getRouteLength(r.id),
+                inicio: { name: parada.lugar, lat: lugar.lat, lng: lugar.lng }
+            });
+            return rutas;
+        }, []);
     }
 
     /**
-     * Pasa al recorrido siguiente de la estación, en forma circular (A, B, C, A…).
-     * También avanza el conteo guardado, para que la próxima visita siga desde aquí.
-     * @param {'cumming'|'quintanormal'} estacion
-     * @returns {{id, estacion, nombre}}
+     * Ordena los recorridos de más cercano a más lejano según la distancia
+     * desde el visitante hasta el punto de partida de cada uno.
+     * Usa la distancia CAMINANDO; si el servicio de rutas no responde, usa la
+     * línea recta y marca "aproximada: true" para que la vista lo indique.
+     * @param {{lat, lng}} coords - ubicación del visitante
+     * @returns {Promise<Array<{id, nombre, paradas, inicio, distance, aproximada}>>}
      */
-    function siguienteRecorrido(estacion) {
-        const actual = elegirRecorrido(estacion);
-        const opciones = RECORRIDOS.filter(r => r.estacion === estacion);
-        const indice = opciones.findIndex(r => r.id === actual.id);
-        const recorrido = opciones[(indice + 1) % opciones.length];
-
-        const visitas = leerVisitas();
-        visitas[estacion] = (visitas[estacion] || 0) + 1;
-        guardarVisitas(visitas);
-
-        elegidos[estacion] = { id: recorrido.id, estacion, nombre: recorrido.nombre };
-        return elegidos[estacion];
-    }
-
-    function leerVisitas() {
+    async function ordenarPorCercania(coords) {
+        const rutas = listarRutas();
+        const inicios = rutas.map(r => r.inicio);
+        let distances;
         try {
-            return JSON.parse(localStorage.getItem(VISITAS_KEY)) || {};
+            distances = await fetchWalkingDistances(coords, inicios);
         } catch (e) {
-            return {};
+            console.warn('Distancia a pie no disponible; se usa línea recta.', e);
+            distances = [];
         }
-    }
-
-    function guardarVisitas(visitas) {
-        try {
-            localStorage.setItem(VISITAS_KEY, JSON.stringify(visitas));
-        } catch (e) { }
+        return rutas
+            .map((r, i) => {
+                const aPie = Number.isFinite(distances[i]);
+                const metros = aPie ? distances[i]
+                    : calculateHaversineDistance(coords.lat, coords.lng, r.inicio.lat, r.inicio.lng);
+                return { ...r, distance: Math.round(metros), aproximada: !aPie };
+            })
+            .sort((a, b) => a.distance - b.distance);
     }
 
     /**
-     * Devuelve los hitos de un recorrido en orden, con sus coordenadas.
-     * Un hito sin coordenadas se omite y se registra como error: no se dibuja
+     * Paradas de un recorrido en orden, cada una con su lugar de places.js.
+     * Una parada sin coordenadas se omite y se registra como error: no se dibuja
      * en un punto inventado que haría ver una ruta falsa.
-     * @param {string} recorridoId - id del recorrido (ej. 'cumming-a')
-     * @returns {Array<{name, address, description, isStation, lat, lng}>}
      */
-    function getRoute(recorridoId) {
+    function paradasConLugar(recorridoId) {
         const recorrido = RECORRIDOS.find(r => r.id === recorridoId);
         if (!recorrido) {
             throw new Error(`No existe el recorrido "${recorridoId}".`);
@@ -90,15 +71,146 @@ ConectaYungay.Service = (function () {
         return recorrido.paradas
             .slice()
             .sort((a, b) => a.orden - b.orden)
-            .reduce((nodes, parada) => {
-                const c = LUGARES[parada.lugar];
-                if (!c) {
-                    console.error(`[Service] Sin coordenadas para el hito: "${parada.lugar}". Se omite.`);
-                    return nodes;
-                }
-                nodes.push({ name: parada.lugar, address: c.direccion, description: c.descripcion || '', isStation: !!c.esEstacion, lat: c.lat, lng: c.lng });
-                return nodes;
-            }, []);
+            .filter(parada => {
+                if (LUGARES[parada.lugar]) return true;
+                console.error(`[Service] Sin coordenadas para el hito: "${parada.lugar}". Se omite.`);
+                return false;
+            })
+            .map(parada => ({ parada, lugar: LUGARES[parada.lugar] }));
+    }
+
+    /**
+     * Devuelve los hitos de un recorrido en orden, con sus coordenadas.
+     * @param {string} recorridoId - id del recorrido (ej. 'ruta-a')
+     * @returns {Array<{name, address, description, isStation, lat, lng, acceso}>}
+     */
+    function getRoute(recorridoId) {
+        return paradasConLugar(recorridoId).map(({ parada, lugar: c }) => ({
+            name: parada.lugar,
+            address: c.direccion,
+            description: c.descripcion || '',
+            isStation: !!c.esEstacion,
+            lat: c.lat,
+            lng: c.lng,
+            acceso: c.acceso || null
+        }));
+    }
+
+    // ─────────────────────────────────────────────
+    //  TRAZADO POR LAS CALLES
+    // ─────────────────────────────────────────────
+    const WALKING_ROUTE_URL = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/';
+
+    /**
+     * Puntos [lat, lng] de cada tramo del recorrido: de una parada a la
+     * siguiente, pasando por sus esquinas "via". Cada parada aporta su punto
+     * de acceso a la calle (o sus coordenadas si no tiene).
+     * @returns {Array<Array<[number, number]>>} un tramo menos que paradas
+     */
+    function puntosDeTramos(recorridoId) {
+        const paradas = paradasConLugar(recorridoId);
+        const punto = c => {
+            const p = c.acceso || c;
+            return [p.lat, p.lng];
+        };
+        const tramos = [];
+        for (let i = 1; i < paradas.length; i++) {
+            tramos.push([
+                punto(paradas[i - 1].lugar),
+                ...(paradas[i].parada.via || []),
+                punto(paradas[i].lugar)
+            ]);
+        }
+        return tramos;
+    }
+
+    /**
+     * Huella corta de los puntos de un recorrido. Si cambian las paradas, sus
+     * accesos o las esquinas, la huella cambia y el trazado precalculado deja
+     * de usarse (ver tools/generar-trazados.js).
+     */
+    function firmaDeTramos(tramos) {
+        const texto = JSON.stringify(tramos);
+        let h = 5381;
+        for (let i = 0; i < texto.length; i++) h = ((h << 5) + h + texto.charCodeAt(i)) >>> 0;
+        return h.toString(36);
+    }
+
+    /**
+     * Pide al servicio de rutas el camino a pie por las calles que une los
+     * puntos de un tramo, en orden.
+     * @returns {Promise<{puntos: Array<[number, number]>, metros: number}>}
+     */
+    async function fetchTramo(puntos) {
+        const coords = puntos.map(([lat, lng]) => `${lng},${lat}`).join(';');
+        const url = `${WALKING_ROUTE_URL}${coords}?overview=full&geometries=geojson`;
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), WALKING_TIMEOUT_MS);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            if (!res.ok) throw new Error(`Servicio de rutas respondió ${res.status}`);
+            const json = await res.json();
+            const ruta = json.code === 'Ok' && json.routes && json.routes[0];
+            if (!ruta || !ruta.geometry || !ruta.geometry.coordinates.length) {
+                throw new Error('Respuesta inválida del servicio de rutas');
+            }
+            return {
+                puntos: ruta.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+                metros: ruta.distance
+            };
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    /**
+     * Calcula en línea el trazado por las calles de un recorrido.
+     * También lo usa tools/generar-trazados.js para precalcularlo.
+     * @returns {Promise<{firma, metros, tramos: Array<Array<[number, number]>>}>}
+     */
+    async function trazarRecorrido(recorridoId) {
+        const puntos = puntosDeTramos(recorridoId);
+        // De a uno: el servicio rechaza (429) muchas consultas simultáneas
+        const tramos = [];
+        for (const p of puntos) tramos.push(await fetchTramo(p));
+        return {
+            firma: firmaDeTramos(puntos),
+            metros: Math.round(tramos.reduce((total, t) => total + t.metros, 0)),
+            tramos: tramos.map(t => t.puntos)
+        };
+    }
+
+    /**
+     * Trazado por las calles de un recorrido, listo para dibujar.
+     * Orden de fuentes: trazado precalculado → servicio de rutas → líneas rectas
+     * entre paradas y esquinas. Con líneas rectas marca "aproximada: true".
+     * @returns {Promise<{tramos: Array<Array<[number, number]>>, aproximada: boolean}>}
+     *   tramos[i] une la parada i con la i+1
+     */
+    async function getRouteGeometry(recorridoId) {
+        const puntos = puntosDeTramos(recorridoId);
+        const guardado = TRAZADOS && TRAZADOS[recorridoId];
+        if (guardado && guardado.firma === firmaDeTramos(puntos)) {
+            return { tramos: guardado.tramos, aproximada: false };
+        }
+        try {
+            const trazado = await trazarRecorrido(recorridoId);
+            return { tramos: trazado.tramos, aproximada: false };
+        } catch (e) {
+            console.warn('Trazado por las calles no disponible; se usan líneas rectas.', e);
+            return { tramos: puntos, aproximada: true };
+        }
+    }
+
+    /**
+     * Metros a pie de un recorrido completo, según el trazado precalculado.
+     * @returns {number|null} null si no hay trazado vigente
+     */
+    function getRouteLength(recorridoId) {
+        const guardado = TRAZADOS && TRAZADOS[recorridoId];
+        if (!guardado || guardado.firma !== firmaDeTramos(puntosDeTramos(recorridoId))) return null;
+        return guardado.metros;
     }
 
     /**
@@ -229,9 +341,12 @@ ConectaYungay.Service = (function () {
     }
 
     return {
-        elegirRecorrido,
-        siguienteRecorrido,
+        listarRutas,
+        ordenarPorCercania,
         getRoute,
+        getRouteGeometry,
+        getRouteLength,
+        trazarRecorrido,
         getDiscounts,
         calculateHaversineDistance,
         getClosestDiscounts

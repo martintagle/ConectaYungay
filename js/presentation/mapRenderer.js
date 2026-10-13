@@ -10,8 +10,9 @@ ConectaYungay.MapRenderer = (function () {
     let routePolyline = null;
     let markers = [];
     let currentRoute = [];
+    let accessLines = [];
     let animatedCount = 0;
-    let isAnimating = false;
+    let animationRun = 0; // identifica la animación en curso
 
     // Centro del Barrio Yungay
     const CENTER = { lat: -33.4405, lng: -70.6745 };
@@ -55,6 +56,7 @@ ConectaYungay.MapRenderer = (function () {
         }
         if (map) { map.remove(); map = null; }
         markers = [];
+        accessLines = [];
         currentRoute = [];
         animatedCount = 0;
 
@@ -85,33 +87,45 @@ ConectaYungay.MapRenderer = (function () {
     function clearRoute() {
         markers.forEach(m => map.removeLayer(m));
         markers = [];
+        accessLines.forEach(l => map.removeLayer(l));
+        accessLines = [];
         if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
         animatedCount = 0;
-        isAnimating = false;
+        animationRun++; // los pasos pendientes de una animación anterior se descartan
     }
 
     /**
-     * Anima el recorrido añadiendo un nodo cada `intervalMs` ms
-     * @param {Array}    routeNodes  - Nodos cargados del repositorio
-     * @param {Function} onNodeAdded - Callback al agregar cada nodo
-     * @param {number}   intervalMs  - Milisegundos entre nodo y nodo (defecto 350)
+     * Anima el recorrido: pone el primer hito y luego dibuja cada tramo por las
+     * calles hasta el hito siguiente, que aparece al terminar el tramo.
+     * @param {Array}    routeNodes  - Hitos del recorrido (ver Service.getRoute)
+     * @param {Object}   geometry    - { tramos, aproximada } (ver Service.getRouteGeometry);
+     *                                 tramos[i] une el hito i con el i+1
+     * @param {Function} onNodeAdded - Callback al agregar cada hito
+     * @param {number}   legMs       - Milisegundos que tarda en dibujarse cada tramo
      * @returns {boolean} true si la animación arrancó; false si el mapa no está listo
      */
-    function animateRoute(routeNodes, onNodeAdded, intervalMs = 350) {
+    function animateRoute(routeNodes, geometry, onNodeAdded, legMs = 600) {
         if (!map) return false;
         clearRoute();
-        isAnimating   = true;
+        const run = animationRun;
         currentRoute  = routeNodes;
         animatedCount = 0;
 
-        const latlngs = [];
+        // Con líneas rectas (sin servicio de rutas) la línea va punteada: es aproximada
+        routePolyline = L.polyline([], {
+            color:     COLOR_CRIMSON,
+            weight:    4,
+            opacity:   0.85,
+            lineJoin:  'round',
+            lineCap:   'round',
+            dashArray: geometry.aproximada ? '8 8' : null
+        }).addTo(map);
 
-        function addNext() {
-            if (!isAnimating || animatedCount >= currentRoute.length) return;
+        function addNode() {
+            if (run !== animationRun) return;
 
             const node    = currentRoute[animatedCount];
             const number  = animatedCount + 1;
-            const isFirst = animatedCount === 0;
 
             // Desmarcar el anterior como activo
             if (animatedCount > 0 && markers[animatedCount - 1]) {
@@ -132,22 +146,17 @@ ConectaYungay.MapRenderer = (function () {
             `);
             markers.push(marker);
 
-            // Añadir segmento de polyline
-            latlngs.push([node.lat, node.lng]);
-            if (routePolyline) {
-                map.removeLayer(routePolyline);
+            // Lugar retirado de la calle (dentro de un parque o pasaje): punteado hasta su acceso
+            if (node.acceso) {
+                accessLines.push(L.polyline([[node.lat, node.lng], [node.acceso.lat, node.acceso.lng]], {
+                    color:     COLOR_GOLD,
+                    weight:    3,
+                    opacity:   0.9,
+                    dashArray: '4 6'
+                }).addTo(map));
             }
-            routePolyline = L.polyline(latlngs, {
-                color:     COLOR_CRIMSON,
-                weight:    4,
-                opacity:   0.85,
-                lineJoin:  'round',
-                lineCap:   'round',
-                dashArray: null
-            }).addTo(map);
 
-            // Mover el mapa suavemente al nuevo nodo si es el primero o hay cambio de zona
-            if (isFirst || animatedCount % 4 === 0) {
+            if (animatedCount === 0) {
                 map.panTo([node.lat, node.lng], { animate: true, duration: 0.5 });
             }
 
@@ -155,14 +164,33 @@ ConectaYungay.MapRenderer = (function () {
             if (onNodeAdded) onNodeAdded(node, animatedCount - 1);
 
             if (animatedCount < currentRoute.length) {
-                setTimeout(addNext, intervalMs);
+                drawLeg(geometry.tramos[animatedCount - 1] || [], addNode);
             } else {
                 // Al terminar: centrar el mapa para ver toda la ruta
-                map.fitBounds(routePolyline.getBounds(), { padding: [40, 40], animate: true });
+                const bounds = routePolyline.getBounds();
+                markers.forEach(m => bounds.extend(m.getLatLng()));
+                map.fitBounds(bounds, { padding: [40, 40], animate: true });
             }
         }
 
-        addNext();
+        // Dibuja los puntos del tramo de a poco durante legMs y luego llama a done
+        function drawLeg(points, done) {
+            const start = performance.now();
+            let drawn = 0;
+            function step(now) {
+                if (run !== animationRun) return;
+                const target = Math.min(points.length, Math.ceil(points.length * (now - start) / legMs));
+                for (; drawn < target; drawn++) routePolyline.addLatLng(points[drawn]);
+                if (drawn < points.length) {
+                    requestAnimationFrame(step);
+                } else {
+                    done();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        addNode();
         return true;
     }
 

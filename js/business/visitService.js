@@ -4,8 +4,8 @@
  *
  * Flujo:
  *   1. La encuesta guarda sus respuestas en el navegador (guardarRespuestas).
- *   2. Al elegir origen (Metro Cumming / Quinta Normal) se crea una fila en
- *      "visitas" con esas respuestas y el origen (iniciarVisita).
+ *   2. Al elegir una ruta (ruta-a … ruta-d) se crea una fila en "visitas"
+ *      con esas respuestas y la ruta como origen (iniciarVisita).
  *   3. Abrir el cartel de un hito crea una fila en "clics_info" con
  *      accion = 'apertura'; pulsar "Más información" crea otra con
  *      accion = 'mas_info' (registrarClic). Si no hubo encuesta, el clic
@@ -61,8 +61,8 @@ ConectaYungay.VisitService = (function () {
     //  VISITA Y CLICS
     // ─────────────────────────────────────────────
     /**
-     * Crea la fila de "visitas" para el origen elegido, si el visitante respondió la encuesta.
-     * @param {'cumming'|'quintanormal'} origen
+     * Crea la fila de "visitas" para la ruta elegida, si el visitante respondió la encuesta.
+     * @param {string} origen - id de la ruta (ej. 'ruta-a')
      */
     function iniciarVisita(origen) {
         const respuestas = leerRespuestas();

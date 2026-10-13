@@ -1,20 +1,25 @@
 /**
  * CAPA DE PRESENTACIÓN (Presentation Layer - UI Controller)
  * ConectaYungay - Controlador de Interfaz y Lógica del Cliente
- * 
+ *
  * NOTA: El mapa Leaflet se inicializa de forma diferida (lazy) cuando el usuario
- * elige un origen, NO durante el arranque de la UI. Esto evita que un error de
+ * elige una ruta, NO durante el arranque de la UI. Esto evita que un error de
  * carga de la librería Leaflet bloquee los botones de la pantalla de bienvenida.
+ *
+ * La pantalla de bienvenida pide permiso para usar la ubicación (GPS) del
+ * visitante y ordena las rutas de la más cercana a la más lejana. Sin permiso,
+ * las rutas se muestran en su orden de siempre (A, B, C, D).
  */
 
 window.ConectaYungay = window.ConectaYungay || {};
 
 ConectaYungay.UI = (function () {
     let routeNodes = [];
+    let routeGeometry = null; // promesa con el trazado por las calles de la ruta actual
     let discountsList = [];
     let discountsRequest = 0; // descarta respuestas de descuentos de un hito anterior
-    let currentOrigin = null;
-    let routeGenerated = false; // el recorrido actual ya se trazó: el próximo clic pasa al siguiente
+    let locationRequest = 0;  // descarta ubicaciones pedidas antes de la última
+    let currentRoute = null;  // { id, nombre } de la ruta elegida
     let mapInitialized = false;
 
     // Referencias al DOM — se llenan en init()
@@ -27,8 +32,9 @@ ConectaYungay.UI = (function () {
         // Cachear elementos del DOM
         DOM.welcomeScreen = document.getElementById('welcome-screen');
         DOM.appScreen = document.getElementById('app-screen');
-        DOM.btnCumming = document.getElementById('btn-cumming');
-        DOM.btnQuintaNormal = document.getElementById('btn-quintanormal');
+        DOM.routesList = document.getElementById('routes-list');
+        DOM.locationStatus = document.getElementById('location-status');
+        DOM.btnLocate = document.getElementById('btn-locate');
         DOM.btnGenerate = document.getElementById('btn-generate');
         DOM.btnDownload = document.getElementById('btn-download');
         DOM.btnReset = document.getElementById('btn-reset');
@@ -38,8 +44,11 @@ ConectaYungay.UI = (function () {
         DOM.selectedNodeLabel = document.getElementById('selected-node-label');
 
         // Registrar eventos — SIEMPRE, independiente del mapa
-        DOM.btnCumming.addEventListener('click', () => selectOrigin('cumming'));
-        DOM.btnQuintaNormal.addEventListener('click', () => selectOrigin('quintanormal'));
+        DOM.routesList.addEventListener('click', e => {
+            const btn = e.target.closest('[data-route-id]');
+            if (btn) selectRoute(btn.dataset.routeId);
+        });
+        DOM.btnLocate.addEventListener('click', requestLocation);
         DOM.btnGenerate.addEventListener('click', startRouteAnimation);
         DOM.btnDownload.addEventListener('click', triggerDownload);
         DOM.btnReset.addEventListener('click', resetToWelcome);
@@ -58,14 +67,15 @@ ConectaYungay.UI = (function () {
     // ─────────────────────────────────────────────
     //  DETECCIÓN DE PARÁMETRO QR
     // ─────────────────────────────────────────────
+    // Un QR puede abrir una ruta directamente: ?ruta=a (o ?ruta=ruta-a).
+    // Cualquier otro valor (por ejemplo los QR antiguos con ?origin=) muestra la lista.
     function detectQRParams() {
-        const origin = new URLSearchParams(window.location.search).get('origin') || '';
-        if (origin === 'cumming' || origin === 'metro-cumming') {
-            selectOrigin('cumming');
-        } else if (['quintanormal', 'quinta-normal', 'metro-quinta-normal'].includes(origin)) {
-            selectOrigin('quintanormal');
+        const ruta = (new URLSearchParams(window.location.search).get('ruta') || '').toLowerCase();
+        const id = ruta.startsWith('ruta-') ? ruta : `ruta-${ruta}`;
+        if (ruta && ConectaYungay.Service.listarRutas().some(r => r.id === id)) {
+            selectRoute(id);
         } else {
-            showScreen('welcome');
+            showWelcome();
         }
     }
 
@@ -82,15 +92,126 @@ ConectaYungay.UI = (function () {
         }
     }
 
+    /**
+     * Muestra la lista de rutas y pide la ubicación para ordenarla.
+     * Si el visitante ya dio permiso, el navegador no vuelve a preguntar.
+     */
+    function showWelcome() {
+        showScreen('welcome');
+        try {
+            renderRoutes(ConectaYungay.Service.listarRutas());
+        } catch (e) {
+            console.error('Error al cargar las rutas:', e);
+            DOM.routesList.innerHTML = '<li class="error-text">No se pudieron cargar las rutas.</li>';
+            return;
+        }
+        requestLocation();
+    }
+
     // ─────────────────────────────────────────────
-    //  SELECCIÓN DE ORIGEN
+    //  UBICACIÓN DEL VISITANTE (GPS)
     // ─────────────────────────────────────────────
-    async function selectOrigin(origin) {
-        currentOrigin = origin;
+    function setLocationStatus(text, showButton, buttonLabel = 'Usar mi ubicación') {
+        DOM.locationStatus.textContent = text;
+        DOM.btnLocate.textContent = buttonLabel;
+        DOM.btnLocate.classList.toggle('hidden', !showButton);
+    }
+
+    /**
+     * Pide la ubicación al navegador (la primera vez muestra el aviso de
+     * permiso) y reordena las rutas según la distancia al punto de partida.
+     */
+    function requestLocation() {
+        // La geolocalización solo funciona en HTTPS (o localhost)
+        if (!('geolocation' in navigator) || !window.isSecureContext) {
+            setLocationStatus('Tu navegador no permite usar la ubicación. Elige la ruta que prefieras.', false);
+            return;
+        }
+
+        const request = ++locationRequest;
+        setLocationStatus('Buscando tu ubicación…', false);
+        DOM.btnLocate.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                if (request !== locationRequest) return;
+                const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+                setLocationStatus('Calculando la distancia a cada ruta…', false);
+                ConectaYungay.Service.ordenarPorCercania(coords)
+                    .then(rutas => {
+                        if (request !== locationRequest) return;
+                        renderRoutes(rutas);
+                        setLocationStatus('Ordenadas de la más cercana a la más lejana de ti.', true, 'Actualizar ubicación');
+                    })
+                    .catch(e => {
+                        console.error('Error al ordenar las rutas:', e);
+                        setLocationStatus('No pudimos calcular las distancias. Elige la ruta que prefieras.', true, 'Reintentar');
+                    })
+                    .finally(() => { DOM.btnLocate.disabled = false; });
+            },
+            error => {
+                if (request !== locationRequest) return;
+                DOM.btnLocate.disabled = false;
+                if (error.code === error.PERMISSION_DENIED) {
+                    setLocationStatus('Sin permiso de ubicación. Puedes activarlo en los ajustes del navegador para ver la ruta más cercana.', true, 'Reintentar');
+                } else {
+                    setLocationStatus('No pudimos obtener tu ubicación. Revisa que el GPS esté activo.', true, 'Reintentar');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+        );
+    }
+
+    function formatMeters(meters) {
+        if (meters < 1000) return `${meters} m`;
+        return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+    }
+
+    /**
+     * Dibuja la lista de rutas. Cada ruta conserva su nombre aunque cambie de
+     * posición; si se conoce la ubicación muestra la distancia al punto de partida.
+     * @param {Array} rutas - ver Service.listarRutas / Service.ordenarPorCercania
+     */
+    function renderRoutes(rutas) {
+        const esc = ConectaYungay.Security.escapeHTML;
+        DOM.routesList.innerHTML = '';
+        rutas.forEach((ruta, i) => {
+            const detalles = [`${ruta.paradas} paradas`];
+            if (Number.isFinite(ruta.metros)) detalles.push(`${formatMeters(ruta.metros)} a pie`);
+
+            let distancia = '';
+            if (Number.isFinite(ruta.distance)) {
+                const texto = ruta.distance < 30 ? 'Estás aquí'
+                    : ruta.aproximada ? `~${formatMeters(ruta.distance)} en línea recta`
+                        : `A ${formatMeters(ruta.distance)} de ti`;
+                distancia = `<span class="route-option-distance${i === 0 ? ' is-closest' : ''}">${esc(texto)}</span>`;
+            }
+
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <button type="button" class="route-option fade-in" data-route-id="${esc(ruta.id)}">
+                    <span class="route-option-main">
+                        <span class="route-option-name">${esc(ruta.nombre)}</span>
+                        <span class="route-option-start">Parte en ${esc(ruta.inicio.name)}</span>
+                        <span class="route-option-meta">${esc(detalles.join(' · '))}</span>
+                    </span>
+                    ${distancia}
+                </button>
+            `;
+            DOM.routesList.appendChild(li);
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    //  SELECCIÓN DE RUTA
+    // ─────────────────────────────────────────────
+    function selectRoute(routeId) {
+        locationRequest++; // una ubicación que llegue tarde ya no reordena la lista
+        const ruta = ConectaYungay.Service.listarRutas().find(r => r.id === routeId);
+        if (!ruta) return;
+        currentRoute = { id: ruta.id, nombre: ruta.nombre };
         // Registra la visita con las respuestas de la encuesta (si las hubo)
-        ConectaYungay.VisitService.iniciarVisita(origin);
-        const displayName = origin === 'cumming' ? 'Metro Cumming' : 'Metro Quinta Normal';
-        DOM.routeName.textContent = `Recorrido desde ${displayName}`;
+        ConectaYungay.VisitService.iniciarVisita(ruta.id);
 
         showScreen('app');
 
@@ -109,12 +230,11 @@ ConectaYungay.UI = (function () {
             }
         }, 150);
 
-        // Cargar nodos de la ruta (la capa de negocio alterna los recorridos por estación)
         try {
-            loadRoute(ConectaYungay.Service.elegirRecorrido(origin));
+            loadRoute(currentRoute);
         } catch (e) {
             console.error('Error al cargar ruta:', e);
-            DOM.nodesContainer.innerHTML = `<p class="error-text">No se pudo cargar la ruta para ${displayName}.</p>`;
+            DOM.nodesContainer.innerHTML = `<p class="error-text">No se pudo cargar la ${ConectaYungay.Security.escapeHTML(ruta.nombre)}.</p>`;
         }
     }
 
@@ -123,16 +243,16 @@ ConectaYungay.UI = (function () {
      * Detiene el recorrido que se esté animando y vacía sus datos.
      */
     function loadRoute(recorrido) {
-        const displayName = currentOrigin === 'cumming' ? 'Metro Cumming' : 'Metro Quinta Normal';
         try { ConectaYungay.MapRenderer.clearRoute(); } catch (e) { }
         routeNodes = [];
-        routeGenerated = false;
 
-        DOM.routeName.textContent = `${recorrido.nombre} desde ${displayName}`;
+        DOM.routeName.textContent = recorrido.nombre;
         routeNodes = ConectaYungay.Service.getRoute(recorrido.id);
         if (!routeNodes.length) {
             throw new Error('La ruta no tiene hitos con coordenadas válidas.');
         }
+        // El trazado por las calles se pide ya, para tenerlo listo al pulsar "Generar Recorrido"
+        routeGeometry = ConectaYungay.Service.getRouteGeometry(recorrido.id);
         DOM.btnGenerate.removeAttribute('disabled');
         DOM.btnDownload.setAttribute('disabled', 'true');
         DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Haz clic en "Generar Recorrido" para trazar la ruta en el mapa.</p>';
@@ -144,23 +264,20 @@ ConectaYungay.UI = (function () {
     // ─────────────────────────────────────────────
     //  ANIMACIÓN DEL RECORRIDO
     // ─────────────────────────────────────────────
-    function startRouteAnimation() {
-        // Si ya se trazó un recorrido, el botón pasa al siguiente de la estación (circular)
-        if (routeGenerated) {
-            try {
-                loadRoute(ConectaYungay.Service.siguienteRecorrido(currentOrigin));
-            } catch (e) {
-                console.error('Error al cargar el siguiente recorrido:', e);
-                DOM.nodesContainer.innerHTML = '<p class="error-text">No se pudo cargar el siguiente recorrido.</p>';
-                return;
-            }
-        }
-        if (!routeNodes.length) return;
+    // Pulsar de nuevo "Generar Recorrido" vuelve a trazar la misma ruta desde el inicio.
+    async function startRouteAnimation() {
+        if (!routeNodes.length || !routeGeometry) return;
+        const route = currentRoute;
 
         DOM.btnGenerate.setAttribute('disabled', 'true');
+        DOM.btnDownload.setAttribute('disabled', 'true');
+        DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Trazando el recorrido por las calles…</p>';
+
+        const geometry = await routeGeometry; // nunca rechaza: sin servicio usa líneas rectas
+        if (route !== currentRoute) return; // el visitante cambió de ruta mientras se esperaba
         DOM.nodesContainer.innerHTML = '';
 
-        const started = ConectaYungay.MapRenderer.animateRoute(routeNodes, (node, index) => {
+        const started = ConectaYungay.MapRenderer.animateRoute(routeNodes, geometry, (node, index) => {
             appendNodeToList(node, index);
             selectActiveNode(index);
 
@@ -168,8 +285,7 @@ ConectaYungay.UI = (function () {
                 DOM.btnDownload.removeAttribute('disabled');
                 DOM.btnGenerate.removeAttribute('disabled');
             }
-        }, 350);
-        if (started) routeGenerated = true;
+        }, 600);
 
         // Si el mapa no está listo, no hay animación que reactive el botón: hacerlo aquí
         if (!started) {
@@ -284,9 +400,9 @@ ConectaYungay.UI = (function () {
     //  DESCARGA Y RESET
     // ─────────────────────────────────────────────
     function triggerDownload() {
-        const name = currentOrigin === 'cumming' ? 'Metro Cumming' : 'Metro Quinta Normal';
+        if (!currentRoute) return;
         try {
-            ConectaYungay.MapRenderer.downloadMap(name);
+            ConectaYungay.MapRenderer.downloadMap(currentRoute.nombre);
         } catch (e) {
             console.error('Error en descarga:', e);
         }
@@ -295,12 +411,12 @@ ConectaYungay.UI = (function () {
     function resetToWelcome() {
         const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
         window.history.pushState({ path: cleanUrl }, '', cleanUrl);
-        currentOrigin = null;
+        currentRoute = null;
         routeNodes = [];
-        routeGenerated = false;
+        routeGeometry = null;
         try { ConectaYungay.MapRenderer.clearRoute(); } catch (e) { }
         ConectaYungay.PlaceInfo.close();
-        showScreen('welcome');
+        showWelcome();
     }
 
     return { init };

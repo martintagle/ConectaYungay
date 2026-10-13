@@ -8,7 +8,8 @@ create table visitas (
   nacionalidad  text not null check (char_length(nacionalidad) <= 60),
   comuna        text check (char_length(comuna) <= 60),
   motivo        text not null check (char_length(motivo) <= 60),
-  origen        text check (origen in ('cumming','quintanormal')),
+  -- ruta elegida; 'cumming' / 'quintanormal' son de visitas anteriores al 2026-10-13
+  origen        text check (origen in ('cumming','quintanormal','ruta-a','ruta-b','ruta-c','ruta-d')),
   check (comuna is null or nacionalidad = 'Chile')
 );
 

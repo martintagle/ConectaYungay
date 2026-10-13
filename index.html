@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Explora el histórico Barrio Yungay en Santiago. Traza tu recorrido patrimonial interactivo desde Metro Cumming o Metro Quinta Normal y obtén descuentos exclusivos en cafeterías, restaurantes y heladerías cercanas.">
+        content="Explora el histórico Barrio Yungay en Santiago. Elige la ruta patrimonial más cercana a ti, recórrela por sus calles y obtén descuentos exclusivos en cafeterías, restaurantes y heladerías cercanas.">
     <title>Conecta Yungay — Recorrido Patrimonial Interactivo</title>
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -23,7 +23,7 @@
          - cdnjs        → html2canvas
          - fonts.googleapis.com / fonts.gstatic.com → Google Fonts
          - mt0..mt3.google.com → Tiles del mapa (Google Maps)
-         - routing.openstreetmap.de → Distancia a pie hasta los locales con descuento
+         - routing.openstreetmap.de → Distancias a pie y trazado de las rutas por las calles
          Bloquea: scripts inline, scripts de otros orígenes, objects, iframes.
          Nota: 'unsafe-inline' en style-src se mantiene porque Leaflet
          aplica estilos inline por JS. frame-ancestors (anti-clickjacking)
@@ -155,21 +155,18 @@
             <img src="assets/logo_sin_fondo.png" alt="Logo Conecta Yungay" class="logo-welcome">
             <h2>Pasaporte Patrimonial</h2>
             <p class="welcome-description">
-                Te damos la bienvenida al barrio patrimonial más vibrante de Santiago. Escanea tu código QR o selecciona
-                tu punto de partida para trazar tu recorrido personalizado y descubrir tesoros locales con beneficios
-                exclusivos.
+                Te damos la bienvenida al barrio patrimonial más vibrante de Santiago. Elige una ruta para trazar tu
+                recorrido por sus calles y descubrir tesoros locales con beneficios exclusivos.
             </p>
-            <h3 class="welcome-options-title">¿Dónde te encuentras?</h3>
-            <div class="welcome-buttons-grid">
-                <button id="btn-cumming" class="btn-choice">
-                    Metro Cumming
-                    <span>Línea 5 — Acceso Este</span>
-                </button>
-                <button id="btn-quintanormal" class="btn-choice">
-                    Metro Quinta Normal
-                    <span>Línea 5 — Acceso Oeste</span>
-                </button>
+            <h3 class="welcome-options-title">Elige tu ruta</h3>
+            <!-- Estado de la ubicación: la lista se ordena por cercanía si el visitante da permiso -->
+            <div class="location-bar">
+                <p id="location-status" class="location-status" role="status">
+                    Activa tu ubicación para ver qué ruta te queda más cerca.
+                </p>
+                <button type="button" id="btn-locate" class="btn-locate">Usar mi ubicación</button>
             </div>
+            <ul id="routes-list" class="routes-list"></ul>
         </section>
     </main>
 
@@ -185,7 +182,7 @@
                     <p>Barrio Yungay, Santiago</p>
                 </div>
             </div>
-            <button id="btn-reset" class="btn-back">Cambiar Origen</button>
+            <button id="btn-reset" class="btn-back">Cambiar Ruta</button>
         </header>
 
         <!-- Contenedor Principal -->
@@ -253,6 +250,7 @@
     <!-- 1. Datos — solo modelo: lugares, recorridos, descuentos y catálogos -->
     <script src="js/data/places.js"></script>
     <script src="js/data/routes.js"></script>
+    <script src="js/data/routeGeometries.js"></script>
     <script src="js/data/discounts.js"></script>
     <script src="js/data/walkingDistances.js"></script>
     <script src="js/data/surveyCatalogs.js"></script>
