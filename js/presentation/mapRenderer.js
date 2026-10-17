@@ -24,11 +24,11 @@ ConectaYungay.MapRenderer = (function () {
     const COLOR_CREAM   = '#F6EFE4';
 
     // Ritmo de la animación del recorrido
-    const METERS_PER_SECOND = 150;  // velocidad con que avanza la línea
-    const LEG_MIN_MS        = 500;  // un tramo muy corto igual se alcanza a ver
-    const LEG_MAX_MS        = 2000; // un tramo muy largo no se hace eterno
-    const STOP_PAUSE_MS     = 180;  // pausa en cada parada antes del tramo siguiente
-    const FIRST_PAN_MS      = 500;  // desplazamiento inicial hasta la primera parada
+    const METERS_PER_SECOND = 300;  // velocidad con que avanza la línea
+    const LEG_MIN_MS        = 300;  // un tramo muy corto igual se alcanza a ver
+    const LEG_MAX_MS        = 1000; // un tramo muy largo no se hace eterno
+    const STOP_PAUSE_MS     = 100;  // pausa en cada parada antes del tramo siguiente
+    const FIRST_PAN_MS      = 400;  // desplazamiento inicial hasta la primera parada
 
     // Acelera al salir de una parada y frena al llegar a la siguiente
     function easeInOut(t) {

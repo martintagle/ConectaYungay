@@ -190,14 +190,25 @@ ConectaYungay.UI = (function () {
                 distancia = `<span class="route-option-distance${i === 0 ? ' is-closest' : ''}">${esc(texto)}</span>`;
             }
 
+            // Letra de la ruta ("Ruta A" → "A") para el círculo de la izquierda
+            const letra = ruta.nombre.replace(/^ruta\s+/i, '').charAt(0).toUpperCase();
+
             const li = document.createElement('li');
             li.innerHTML = `
-                <button type="button" class="route-option fade-in" data-route-id="${esc(ruta.id)}">
-                    <span class="route-option-name">${esc(ruta.nombre)}</span>
-                    ${distancia}
-                    <span class="route-option-start">Parte en ${esc(ruta.inicio.name)}</span>
-                    <span class="route-option-meta">${chips}</span>
-                    <span class="route-option-cta" aria-hidden="true"><span class="route-option-cta-text">Ver ruta </span>→</span>
+                <button type="button" class="route-option fade-in${i === 0 && distancia ? ' is-closest' : ''}" data-route-id="${esc(ruta.id)}">
+                    <span class="route-option-badge" aria-hidden="true">${esc(letra)}</span>
+                    <span class="route-option-body">
+                        <span class="route-option-top">
+                            <span class="route-option-name">${esc(ruta.nombre)}</span>
+                            ${distancia}
+                        </span>
+                        <span class="route-option-start">Parte en ${esc(ruta.inicio.name)}</span>
+                        <span class="route-option-meta">${chips}</span>
+                    </span>
+                    <span class="route-option-cta" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </span>
                 </button>
             `;
             DOM.routesList.appendChild(li);
@@ -260,7 +271,7 @@ ConectaYungay.UI = (function () {
         DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Haz clic en "Generar Recorrido" para trazar la ruta en el mapa.</p>';
         discountsRequest++;
         DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Los descuentos aparecerán al iniciar el recorrido.</p>';
-        DOM.selectedNodeLabel.textContent = 'Ninguno';
+        DOM.selectedNodeLabel.textContent = 'ninguna todavía';
     }
 
     // ─────────────────────────────────────────────
@@ -302,9 +313,16 @@ ConectaYungay.UI = (function () {
         el.id = `ui-node-${index}`;
         // Security: escapeHTML previene XSS en caso de datos comprometidos del repositorio
         const safeName = ConectaYungay.Security.escapeHTML(node.name);
+        // Las paradas con cartel llevan una flecha: se pueden abrir para leer su historia
         el.innerHTML = `
             <div class="node-number">${index + 1}</div>
-            <div class="node-details"><span class="node-name">${safeName}</span></div>
+            <div class="node-details">
+                <span class="node-name">${safeName}</span>
+                ${node.isStation ? '<span class="node-tag">Estación de metro</span>' : ''}
+            </div>
+            ${node.isStation ? '' : `
+            <svg class="node-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`}
         `;
         // Las estaciones de metro no tienen cartel informativo: solo se seleccionan
         if (node.isStation) el.classList.add('is-station');

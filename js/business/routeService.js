@@ -82,13 +82,14 @@ ConectaYungay.Service = (function () {
     /**
      * Devuelve los hitos de un recorrido en orden, con sus coordenadas.
      * @param {string} recorridoId - id del recorrido (ej. 'ruta-a')
-     * @returns {Array<{name, address, description, webUrl, instagramUrl, isStation, lat, lng, acceso}>}
+     * @returns {Array<{name, address, description, translations, webUrl, instagramUrl, isStation, lat, lng, acceso}>}
      */
     function getRoute(recorridoId) {
         return paradasConLugar(recorridoId).map(({ parada, lugar: c }) => ({
             name: parada.lugar,
             address: c.direccion,
             description: c.descripcion || '',
+            translations: c.traduccion || {},
             webUrl: c.web || null,
             instagramUrl: c.instagram || null,
             isStation: !!c.esEstacion,

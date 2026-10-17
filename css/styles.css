@@ -1,14 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
+/* ═══════════════════════════════════════════════════════════
+   DISEÑO "PASAPORTE": cada panel es un cupón. Encabezado con ícono
+   en círculo, línea punteada con muescas entre secciones, botones
+   redondos y tarjetas internas color crema.
+   ═══════════════════════════════════════════════════════════ */
+
 /* variables de diseño basadas en la paleta del proyecto */
 :root {
     --color-crimson: #A7302A;     /* #A7302A - Rojo Primario */
+    --color-crimson-dark: #8C2520;
     --color-cream: #F6EFE4;       /* #F6EFE4 - Fondo General */
     --color-gold: #C88A2A;        /* #C88A2A - Accent dorado */
     --color-sage: #66754D;        /* #66754D - Verde Oliva */
     --color-slate: #6E6A65;       /* #6E6A65 - Texto Secundario/Bordes */
     --color-dark: #2C2A29;        /* Neutro muy oscuro para encabezados */
     --color-white: #FFFFFF;
+    --crimson-soft: rgba(167, 48, 42, 0.1);
+    --gold-soft: rgba(200, 138, 42, 0.15);
+    --sage-soft: rgba(102, 117, 77, 0.15);
+    --border-soft: rgba(110, 106, 101, 0.14);
+    --line-dashed: rgba(110, 106, 101, 0.25);
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Outfit', sans-serif;
     --shadow-sm: 0 4px 6px -1px rgba(110, 106, 101, 0.1), 0 2px 4px -1px rgba(110, 106, 101, 0.06);
@@ -69,7 +81,202 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* PANTALLA DE BIENVENIDA (Welcome Screen) */
+/* ─────────────────────────────────────────────
+   PIEZAS DEL CUPÓN (se reutilizan en toda la app)
+   ───────────────────────────────────────────── */
+
+/* Contenedor con forma de cupón. --pad es su relleno: la línea punteada lo
+   usa para llegar de borde a borde. --notch-bg es el color de lo que hay
+   detrás, para que las muescas parezcan recortadas */
+.ticket {
+    --pad: 24px;
+    --notch-bg: var(--color-cream);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Línea punteada con una muesca semicircular en cada lado */
+.ticket-divider,
+.discount-card-divider {
+    position: relative;
+    flex-shrink: 0;
+    height: 2px;
+    margin: var(--divider-gap, 20px) calc(-1 * var(--pad, 24px));
+    padding: 0 22px;
+    background: repeating-linear-gradient(90deg, var(--line-dashed) 0 7px, transparent 7px 13px) content-box;
+}
+
+.ticket-divider::before,
+.ticket-divider::after,
+.discount-card-divider::before,
+.discount-card-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    border-radius: 50%;
+    background-color: var(--notch-bg, var(--color-cream));
+    box-shadow: inset 0 0 0 1px var(--border-soft);
+}
+
+.ticket-divider::before,
+.discount-card-divider::before {
+    left: -11px;
+}
+
+.ticket-divider::after,
+.discount-card-divider::after {
+    right: -11px;
+}
+
+/* Sin muescas (en el cartel, detrás hay un fondo oscuro translúcido) */
+.ticket-divider--plain {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+}
+
+.ticket-divider--plain::before,
+.ticket-divider--plain::after {
+    display: none;
+}
+
+/* Etiqueta pequeña en mayúsculas sobre los títulos */
+.eyebrow {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent, var(--color-gold));
+}
+
+/* Encabezado de panel: ícono en círculo + etiqueta + título */
+.panel-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.panel-head > div {
+    min-width: 0;
+}
+
+.panel-icon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--accent, var(--color-gold));
+    background-color: var(--accent-soft, var(--gold-soft));
+}
+
+.panel-head h2,
+.panel-head h3 {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    line-height: 1.15;
+    color: var(--color-dark);
+    overflow-wrap: break-word;
+}
+
+/* ─────────────────────────────────────────────
+   BOTONES
+   ───────────────────────────────────────────── */
+.btn-primary,
+.btn-success {
+    color: var(--color-white);
+    border: none;
+    padding: 13px 22px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.btn-primary {
+    background-color: var(--color-crimson);
+    box-shadow: 0 4px 10px rgba(167, 48, 42, 0.22);
+}
+
+.btn-success {
+    background-color: var(--color-sage);
+    box-shadow: 0 4px 10px rgba(102, 117, 77, 0.22);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--color-crimson-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(167, 48, 42, 0.3);
+}
+
+.btn-success:hover:not(:disabled) {
+    background-color: #556240;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(102, 117, 77, 0.3);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-success:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.btn-success:disabled {
+    background-color: var(--color-slate);
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-primary svg,
+.btn-success svg {
+    flex-shrink: 0;
+}
+
+/* Botón redondo con un ícono (Maps, Instagram, web...) */
+.btn-map-link,
+.btn-place-link,
+.btn-instagram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    color: var(--color-dark);
+    background-color: var(--color-white);
+    border: 1px solid rgba(110, 106, 101, 0.35);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.btn-map-link:hover,
+.btn-map-link:focus-visible,
+.btn-place-link:hover,
+.btn-place-link:focus-visible,
+.btn-instagram:hover,
+.btn-instagram:focus-visible {
+    background-color: var(--accent, var(--color-gold));
+    color: var(--color-white);
+    border-color: var(--accent, var(--color-gold));
+}
+
+/* ─────────────────────────────────────────────
+   PANTALLAS DE BIENVENIDA Y ENCUESTA
+   ───────────────────────────────────────────── */
 .welcome-container {
     min-height: 100vh;
     width: 100%;
@@ -110,11 +317,11 @@ body {
 }
 
 .welcome-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    padding: 28px 35px;
+    --pad: 32px;
+    --notch-bg: #F2EADF; /* tono del fondo degradado detrás de la tarjeta */
+    background: var(--color-white);
+    border: 1px solid var(--border-soft);
+    padding: 26px var(--pad) 30px;
     width: 100%;
     max-width: 580px;
     border-radius: var(--radius-lg);
@@ -123,42 +330,45 @@ body {
     z-index: 1;
 }
 
+/* El PNG del logo trae mucho margen transparente arriba y abajo: se recorta
+   a la franja con el dibujo para que no quede espacio en blanco */
 .logo-welcome {
-    max-width: 180px;
-    width: 100%;
+    display: block;
+    width: min(230px, 75%);
     height: auto;
-    margin-bottom: 14px;
+    aspect-ratio: 2.4 / 1;
+    object-fit: cover;
+    object-position: center 44%;
+    margin: 0 auto 8px;
     transition: transform 0.3s ease;
 }
 
 .logo-welcome:hover {
-    transform: scale(1.05);
+    transform: scale(1.04);
 }
 
 .welcome-card h2 {
     font-family: var(--font-body);
     font-size: 1.1rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 0.14em;
     color: var(--color-gold);
-    margin-bottom: 14px;
-    font-weight: 600;
+    margin-bottom: 10px;
+    font-weight: 700;
 }
 
 .welcome-description {
     color: var(--color-slate);
     font-size: 1.05rem;
-    margin-bottom: 22px;
     font-weight: 400;
 }
 
 .welcome-options-title {
-    font-weight: 600;
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-dark);
-    margin-bottom: 12px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.45rem;
+    color: var(--color-crimson);
+    margin-bottom: 8px;
 }
 
 /* Ubicación del visitante y lista de rutas */
@@ -168,7 +378,7 @@ body {
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px 12px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .location-status {
@@ -178,10 +388,10 @@ body {
 }
 
 .btn-locate {
-    background: transparent;
+    background: var(--color-white);
     color: var(--color-crimson);
     border: 1.5px solid var(--color-crimson);
-    padding: 6px 14px;
+    padding: 6px 16px;
     border-radius: 999px;
     font-family: var(--font-body);
     font-size: 0.85rem;
@@ -192,7 +402,7 @@ body {
 
 .btn-locate:hover:not(:disabled) {
     background: var(--color-crimson);
-    color: var(--color-cream);
+    color: var(--color-white);
 }
 
 .btn-locate:disabled {
@@ -207,84 +417,103 @@ body {
     gap: 10px;
 }
 
+/* Cada ruta es una tarjeta crema, como las de beneficios: letra en un
+   círculo a la izquierda, datos al centro y flecha redonda a la derecha */
 .route-option {
     width: 100%;
-    background-color: var(--color-white);
+    background-color: var(--color-cream);
     color: var(--color-dark);
-    border: 2px solid rgba(110, 106, 101, 0.35);
-    padding: 12px 16px;
+    border: 1px solid var(--border-soft);
+    padding: 12px 14px;
     font-family: var(--font-body);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
-    /* Nombre y distancia arriba; datos a la izquierda y "Ver ruta" a la derecha */
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-        "name  dist"
-        "start start"
-        "meta  cta";
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 6px 12px;
+    gap: 12px;
     text-align: left;
-    box-shadow: var(--shadow-sm);
 }
 
 .route-option:hover,
 .route-option:focus-visible {
     border-color: var(--color-crimson);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
-    background-color: rgba(167, 48, 42, 0.02);
+    outline: none;
+}
+
+.route-option-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-crimson);
+    background-color: var(--crimson-soft);
+}
+
+.route-option.is-closest .route-option-badge {
+    color: var(--color-sage);
+    background-color: var(--sage-soft);
+}
+
+.route-option-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.route-option-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
 }
 
 .route-option-name {
-    grid-area: name;
-    font-size: 1.1rem;
+    font-size: 1.08rem;
     font-weight: 700;
-    color: var(--color-crimson);
+    color: var(--color-dark);
+    line-height: 1.25;
 }
 
 .route-option-start {
-    grid-area: start;
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 0.86rem;
+    color: var(--color-slate);
+    line-height: 1.35;
 }
 
 .route-option-meta {
-    grid-area: meta;
     display: flex;
     flex-wrap: nowrap; /* paradas y largo siempre lado a lado */
     gap: 6px;
+    margin-top: 3px;
     min-width: 0;
 }
 
 .route-option-chip {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
+    font-weight: 500;
     color: var(--color-slate);
-    border: 1px solid rgba(110, 106, 101, 0.3);
-    padding: 2px 8px;
+    background-color: var(--color-white);
+    border: 1px solid var(--border-soft);
+    padding: 1px 8px;
     border-radius: 999px;
     white-space: nowrap;
 }
 
-.route-option-cta {
-    grid-area: cta;
-    justify-self: end;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--color-crimson);
-    white-space: nowrap;
-}
-
 .route-option-distance {
-    grid-area: dist;
-    justify-self: end;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: var(--color-slate);
     background: rgba(110, 106, 101, 0.1);
-    padding: 4px 10px;
+    padding: 2px 9px;
     border-radius: 999px;
     white-space: nowrap;
 }
@@ -294,23 +523,38 @@ body {
     background: var(--color-sage);
 }
 
+.route-option-cta {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--color-crimson);
+    background-color: var(--color-white);
+    border: 1px solid rgba(110, 106, 101, 0.3);
+    transition: all 0.2s ease;
+}
+
+.route-option:hover .route-option-cta,
+.route-option:focus-visible .route-option-cta {
+    background-color: var(--color-crimson);
+    border-color: var(--color-crimson);
+    color: var(--color-white);
+}
+
 /* Pantalla "Elige tu ruta" en el teléfono */
 @media (max-width: 480px) {
     #welcome-screen {
         padding: 12px;
     }
 
-    #welcome-screen .welcome-card {
-        padding: 18px 18px 22px;
+    .welcome-card {
+        --pad: 18px;
+        padding: 18px var(--pad) 22px;
     }
 
-    /* El PNG del logo trae mucho margen transparente arriba y abajo:
-       se recorta a la franja con el dibujo para acercar el título */
-    #welcome-screen .logo-welcome {
-        max-width: 210px;
-        aspect-ratio: 2.4 / 1;
-        object-fit: cover;
-        object-position: center 44%;
+    .logo-welcome {
+        width: 210px;
         margin-bottom: 6px;
     }
 
@@ -319,16 +563,25 @@ body {
         white-space: nowrap;
         font-size: clamp(0.8rem, 4.6vw, 1.1rem);
         letter-spacing: 0.08em;
-        margin-bottom: 10px;
     }
 
-    #welcome-screen .welcome-description {
+    .welcome-description {
         font-size: 1rem;
-        margin-bottom: 18px;
+    }
+
+    .welcome-card .ticket-divider {
+        --divider-gap: 16px;
     }
 
     .route-option {
-        padding: 12px 14px;
+        padding: 11px 12px;
+        gap: 10px;
+    }
+
+    .route-option-badge {
+        width: 36px;
+        height: 36px;
+        font-size: 1.15rem;
     }
 
     .route-option-meta {
@@ -336,37 +589,41 @@ body {
     }
 
     .route-option-chip {
-        font-size: 0.74rem;
-        padding: 2px 7px;
-    }
-}
-
-/* Teléfonos muy angostos: "Ver ruta →" queda solo como flecha para dar espacio */
-@media (max-width: 350px) {
-    .route-option-cta-text {
-        display: none;
+        font-size: 0.72rem;
+        padding: 1px 7px;
     }
 
     .route-option-cta {
-        font-size: 1.1rem;
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Teléfonos muy angostos: sin la flecha (toda la tarjeta ya es un botón) */
+@media (max-width: 350px) {
+    .route-option {
+        grid-template-columns: auto 1fr;
+    }
+
+    .route-option-cta {
+        display: none;
     }
 }
 
 /* ENCUESTA DE VISITANTE (Survey Screen) */
 .survey-card {
     max-width: 600px;
-    padding-top: 22px;
     text-align: left;
 }
 
-.survey-card .logo-welcome {
-    display: block;
-    margin: 0 auto 6px;
+.survey-card .eyebrow {
+    text-align: center;
 }
 
 .survey-card .survey-title {
     font-family: var(--font-heading);
-    font-size: 2.2rem;
+    font-size: 2.1rem;
+    line-height: 1.2;
     color: var(--color-crimson);
     text-align: center;
     margin-bottom: 10px;
@@ -377,7 +634,6 @@ body {
     text-align: center;
     color: var(--color-slate);
     font-size: 1rem;
-    margin-bottom: 20px;
 }
 
 .survey-form {
@@ -391,14 +647,14 @@ body {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .survey-label {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.08em;
     color: var(--color-dark);
     padding: 0;
 }
@@ -409,14 +665,15 @@ body {
     font-family: var(--font-body);
     font-size: 1rem;
     color: var(--color-dark);
-    background: var(--color-white);
-    border: 2px solid var(--color-slate);
-    border-radius: var(--radius-sm);
-    transition: border-color 0.2s ease;
+    background: var(--color-cream);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .survey-input:focus {
     outline: none;
+    background: var(--color-white);
     border-color: var(--color-crimson);
     box-shadow: 0 0 0 3px rgba(167, 48, 42, 0.15);
 }
@@ -424,7 +681,7 @@ body {
 .survey-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
 .survey-chip {
@@ -440,13 +697,13 @@ body {
 
 .survey-chip span {
     display: inline-block;
-    padding: 10px 16px;
+    padding: 8px 16px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     color: var(--color-dark);
-    background: var(--color-white);
-    border: 2px solid var(--color-slate);
-    border-radius: var(--radius-md);
+    background: var(--color-cream);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 999px;
     transition: all 0.2s ease;
 }
 
@@ -475,18 +732,18 @@ body {
 
 .survey-actions {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     margin-top: 6px;
 }
 
 .btn-survey-primary,
 .btn-survey-secondary {
     flex: 1;
-    padding: 16px 20px;
+    padding: 14px 20px;
     font-family: var(--font-body);
     font-size: 1rem;
     font-weight: 700;
-    border-radius: var(--radius-md);
+    border-radius: 999px;
     cursor: pointer;
     transition: all 0.25s ease;
 }
@@ -495,11 +752,11 @@ body {
     background: var(--color-crimson);
     color: var(--color-white);
     border: none;
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 10px rgba(167, 48, 42, 0.22);
 }
 
 .btn-survey-primary:hover:not(:disabled) {
-    background: #8E2620;
+    background: var(--color-crimson-dark);
     transform: translateY(-2px);
 }
 
@@ -511,7 +768,7 @@ body {
 .btn-survey-secondary {
     background: var(--color-white);
     color: var(--color-dark);
-    border: 2px solid var(--color-slate);
+    border: 1.5px solid rgba(110, 106, 101, 0.4);
 }
 
 .btn-survey-secondary:hover {
@@ -520,19 +777,19 @@ body {
 }
 
 .survey-note {
-    margin-top: 22px;
+    margin-top: 18px;
     text-align: center;
     color: var(--color-slate);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
 }
 
 @media (max-width: 480px) {
     .survey-card {
-        padding: 18px 22px 32px;
+        padding-bottom: 28px;
     }
 
     .survey-card .survey-title {
-        font-size: 1.8rem;
+        font-size: 1.75rem;
     }
 
     .survey-actions {
@@ -540,11 +797,14 @@ body {
     }
 }
 
-/* PANTALLA PRINCIPAL DE LA APLICACIÓN (App Screen) */
+/* ─────────────────────────────────────────────
+   PANTALLA PRINCIPAL DE LA APLICACIÓN (App Screen)
+   ───────────────────────────────────────────── */
 .app-header {
     background-color: var(--color-white);
     box-shadow: var(--shadow-sm);
-    padding: 15px 40px;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 12px 40px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -558,15 +818,18 @@ body {
 .header-branding {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
     min-width: 0;
 }
 
+/* Logo recortado igual que en la bienvenida: mismo dibujo, menos alto */
 .logo-header {
-    height: 104px;
-    width: auto;
+    width: 132px;
+    height: auto;
+    aspect-ratio: 2.4 / 1;
+    object-fit: cover;
+    object-position: center 44%;
     flex-shrink: 0;
-    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.18));
     transition: transform 0.3s ease;
 }
 
@@ -576,6 +839,17 @@ body {
 
 .header-title-container {
     min-width: 0;
+    padding-left: 18px;
+    border-left: 2px dashed var(--line-dashed);
+}
+
+.header-title-container p {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--color-gold);
+    text-transform: uppercase;
+    font-weight: 700;
+    line-height: 1.3;
 }
 
 .header-title-container h1 {
@@ -586,17 +860,47 @@ body {
     overflow-wrap: anywhere;
 }
 
-.header-title-container p {
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    color: var(--color-gold);
-    text-transform: uppercase;
+.btn-back {
+    background: var(--color-white);
+    border: 1.5px solid rgba(110, 106, 101, 0.35);
+    border-radius: 999px;
+    padding: 7px 16px 7px 12px;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
     font-weight: 600;
+    color: var(--color-dark);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover,
+.btn-back:focus-visible {
+    border-color: var(--color-crimson);
+    background-color: var(--color-crimson);
+    color: var(--color-white);
 }
 
 @media (max-width: 600px) {
+    /* En el teléfono todo en una fila: "Cambiar ruta" queda como flecha en un círculo */
     .app-header {
-        padding: 12px 16px;
+        padding: 10px 14px;
+        flex-wrap: nowrap;
+    }
+
+    .header-eyebrow-long,
+    .btn-back-text {
+        display: none;
+    }
+
+    .btn-back {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        justify-content: center;
     }
 
     .header-branding {
@@ -604,30 +908,20 @@ body {
     }
 
     .logo-header {
-        height: 112px;
+        width: 108px;
+    }
+
+    .header-title-container {
+        padding-left: 12px;
+    }
+
+    .header-title-container p {
+        font-size: 0.66rem;
     }
 
     .header-title-container h1 {
-        font-size: 1.25rem;
+        font-size: 1.3rem;
     }
-}
-
-.btn-back {
-    background: none;
-    border: none;
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-slate);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: color 0.2s ease;
-}
-
-.btn-back:hover {
-    color: var(--color-crimson);
 }
 
 /* Layout principal — 3 columnas: 45% mapa | ~27.5% recorrido | ~27.5% descuentos */
@@ -670,21 +964,25 @@ body {
 
 /* COLUMNA DEL MAPA */
 .map-card {
+    --pad: 20px;
     background-color: var(--color-white);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    padding: 25px;
-    border: 1px solid rgba(110, 106, 101, 0.1);
+    padding: var(--pad);
+    border: 1px solid var(--border-soft);
     display: flex;
     flex-direction: column;
-    align-items: center;
     width: 100%;
     min-width: 0;
 }
 
 @media (max-width: 600px) {
     .map-card {
-        padding: 14px;
+        --pad: 12px;
+    }
+
+    .map-card .ticket-divider {
+        --divider-gap: 14px;
     }
 }
 
@@ -695,8 +993,7 @@ body {
     background-color: var(--color-cream);
     border-radius: var(--radius-md);
     overflow: hidden;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-    border: 2px solid rgba(110, 106, 101, 0.15);
+    border: 1px solid var(--border-soft);
     position: relative;
     z-index: 0;
 }
@@ -715,169 +1012,99 @@ body {
 
 .map-actions {
     width: 100%;
-    margin-top: 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 12px;
 }
 
 @media (max-width: 480px) {
     .map-actions {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
-}
-
-.btn-primary {
-    background-color: var(--color-crimson);
-    color: var(--color-white);
-    border: none;
-    padding: 14px 24px;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(167, 48, 42, 0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #8C2520;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(167, 48, 42, 0.3);
-}
-
-.btn-primary:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.btn-primary:disabled {
-    background-color: var(--color-slate);
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.btn-success {
-    background-color: var(--color-sage);
-    color: var(--color-white);
-    border: none;
-    padding: 14px 24px;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(102, 117, 77, 0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-success:hover:not(:disabled) {
-    background-color: #556240;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(102, 117, 77, 0.3);
-}
-
-.btn-success:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.btn-success:disabled {
-    background-color: var(--color-slate);
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
 }
 
 /* Estilos comunes a los paneles laterales (recorrido y descuentos) */
 .panel-card {
+    --pad: 24px;
     background-color: var(--color-white);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    border: 1px solid rgba(110, 106, 101, 0.1);
-    padding: 25px;
+    border: 1px solid var(--border-soft);
+    padding: var(--pad);
     display: flex;
     flex-direction: column;
     gap: 16px;
     min-width: 0;
 }
 
+/* Dentro de los paneles el espacio lo da el gap: la línea no suma margen */
+.panel-card > .ticket-divider {
+    --divider-gap: 0px;
+}
+
 @media (max-width: 600px) {
     .panel-card {
-        padding: 16px;
+        --pad: 16px;
     }
 }
 
-/* Eliminar la detail-column (ya no se usa en el HTML) */
-.detail-column {
-    display: contents; /* Transparente al grid, sus hijos participan directamente */
+.route-card {
+    --accent: var(--color-crimson);
+    --accent-soft: var(--crimson-soft);
 }
 
-/* Banner de Frase Yungay */
+.discounts-card {
+    --accent: var(--color-gold);
+    --accent-soft: var(--gold-soft);
+}
+
+/* Banner de Frase Yungay: un "sello" dorado del pasaporte */
 .poetry-banner {
     background: linear-gradient(135deg, var(--color-gold) 0%, #AF741D 100%);
     border-radius: var(--radius-md);
-    padding: 25px 30px;
-    box-shadow: var(--shadow-md);
+    padding: 18px 22px;
     color: var(--color-white);
-    border-left: 6px solid var(--color-crimson);
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.12);
 }
 
 .poetry-banner::before {
-    content: '"';
+    content: '';
     position: absolute;
-    right: 15px;
-    bottom: -20px;
-    font-size: 10rem;
-    font-family: var(--font-heading);
-    color: rgba(255, 255, 255, 0.08);
-    line-height: 1;
+    inset: 8px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.45);
+    border-radius: 11px;
+    pointer-events: none;
 }
 
 .poetry-banner p {
+    position: relative;
     font-family: var(--font-heading);
     font-size: 1rem;
     line-height: 1.5;
     font-style: italic;
     font-weight: 400;
+    text-align: center;
     overflow-wrap: break-word;
 }
 
-.route-card h2 {
-    font-family: var(--font-heading);
-    font-size: 1.8rem;
-    color: var(--color-crimson);
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-cream);
-    padding-bottom: 10px;
-}
-
-/* Lista de Nodos — altura adaptada al panel lateral completo */
+/* Lista de Nodos — una línea de tiempo con las paradas */
 .nodes-scroller {
-    max-height: 420px;
+    max-height: 440px;
     overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 6px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border-radius: var(--radius-sm);
 }
 
 .placeholder-text {
     color: var(--color-slate);
     font-style: italic;
     text-align: center;
-    padding: 30px 10px;
+    padding: 26px 10px;
     font-size: 0.95rem;
 }
 
@@ -889,37 +1116,50 @@ body {
 }
 
 .route-node-item {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 12px 15px;
+    gap: 12px;
+    padding: 10px 12px;
     background-color: var(--color-cream);
     border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft);
     cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Tramo punteado que une cada parada con la siguiente */
+.route-node-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: calc(50% + 16px);
+    height: calc(50% - 4px);
+    border-left: 2px dashed rgba(200, 138, 42, 0.55);
+    pointer-events: none;
 }
 
 .route-node-item:hover {
-    transform: translateX(5px);
+    transform: translateX(4px);
     border-color: var(--color-gold);
-    background-color: var(--color-white);
     box-shadow: var(--shadow-sm);
 }
 
 .route-node-item.active {
-    background-color: var(--color-crimson);
-    color: var(--color-white);
-    box-shadow: var(--shadow-md);
+    background-color: var(--color-white);
     border-color: var(--color-crimson);
+    box-shadow: 0 0 0 3px var(--crimson-soft);
 }
 
 .node-number {
-    width: 28px;
-    height: 28px;
+    position: relative;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background-color: var(--color-gold);
-    color: var(--color-white);
+    background-color: var(--color-white);
+    color: var(--color-gold);
+    border: 2px solid var(--color-gold);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -928,36 +1168,55 @@ body {
     flex-shrink: 0;
 }
 
+.route-node-item.is-station .node-number {
+    color: var(--color-sage);
+    border-color: var(--color-sage);
+}
+
 .route-node-item.active .node-number {
-    background-color: var(--color-white);
-    color: var(--color-crimson);
+    background-color: var(--color-crimson);
+    border-color: var(--color-crimson);
+    color: var(--color-white);
 }
 
 .node-details {
     flex-grow: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .node-name {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.98rem;
+    line-height: 1.3;
     overflow-wrap: break-word;
 }
 
-/* Estilos del panel de descuentos (la base la da .panel-card) */
-
-.discounts-card h2 {
-    font-family: var(--font-heading);
-    font-size: 1.8rem;
-    color: var(--color-crimson);
-    margin-bottom: 5px;
-    text-align: center;
+.node-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-sage);
 }
 
-.discounts-subtitle {
-    font-size: 0.95rem;
+.node-chevron {
+    flex-shrink: 0;
     color: var(--color-slate);
-    margin-bottom: 20px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.route-node-item:hover .node-chevron,
+.route-node-item.active .node-chevron {
+    color: var(--color-crimson);
+    transform: translateX(2px);
+}
+
+/* Estilos del panel de descuentos (la base la da .panel-card) */
+.discounts-subtitle {
+    font-size: 0.88rem;
+    color: var(--color-slate);
     text-align: center;
 }
 
@@ -970,17 +1229,20 @@ body {
 .discounts-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
 /* Tarjeta de beneficio con forma de cupón: datos arriba, línea punteada con
    muescas a los lados y, abajo, la distancia y los enlaces del local */
 .discount-card {
     --accent: var(--color-gold);
-    --accent-soft: rgba(200, 138, 42, 0.15);
+    --accent-soft: var(--gold-soft);
+    --pad: 0px;
+    --divider-gap: 0px;
+    --notch-bg: var(--color-white);
     background-color: var(--color-cream);
     border-radius: var(--radius-md);
-    border: 1px solid rgba(110, 106, 101, 0.12);
+    border: 1px solid var(--border-soft);
     position: relative;
     overflow: hidden;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -988,12 +1250,12 @@ body {
 
 .discount-card--restaurante {
     --accent: var(--color-crimson);
-    --accent-soft: rgba(167, 48, 42, 0.12);
+    --accent-soft: var(--crimson-soft);
 }
 
 .discount-card--heladeria {
     --accent: var(--color-sage);
-    --accent-soft: rgba(102, 117, 77, 0.15);
+    --accent-soft: var(--sage-soft);
 }
 
 .discount-card:hover {
@@ -1049,33 +1311,6 @@ body {
     overflow-wrap: break-word;
 }
 
-/* Línea punteada del cupón; los círculos del color del panel hacen las muescas */
-.discount-card-divider {
-    position: relative;
-    margin: 0 16px;
-    border-top: 2px dashed rgba(110, 106, 101, 0.22);
-}
-
-.discount-card-divider::before,
-.discount-card-divider::after {
-    content: '';
-    position: absolute;
-    top: -11px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--color-white);
-    border: 1px solid rgba(110, 106, 101, 0.12);
-}
-
-.discount-card-divider::before {
-    left: -27px;
-}
-
-.discount-card-divider::after {
-    right: -27px;
-}
-
 .discount-card-bottom {
     display: flex;
     align-items: center;
@@ -1106,38 +1341,15 @@ body {
     margin-left: auto;
 }
 
-.btn-map-link,
-.btn-place-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    color: var(--color-dark);
-    background-color: var(--color-white);
-    border: 1px solid rgba(110, 106, 101, 0.35);
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
-
-.btn-map-link:hover,
-.btn-map-link:focus-visible,
-.btn-place-link:hover,
-.btn-place-link:focus-visible {
-    background-color: var(--accent);
-    color: var(--color-white);
-    border-color: var(--accent);
-}
-
 /* FOOTER */
 .app-footer {
     text-align: center;
-    padding: 40px 20px;
+    padding: 30px 20px 40px;
     color: var(--color-slate);
-    font-size: 0.9rem;
-    margin-top: 50px;
-    border-top: 1px solid rgba(110, 106, 101, 0.1);
+    font-size: 0.88rem;
+    margin: 40px auto 0;
+    max-width: 1600px;
+    background: repeating-linear-gradient(90deg, var(--line-dashed) 0 7px, transparent 7px 13px) top / 100% 2px no-repeat;
 }
 
 .app-footer span {
@@ -1145,17 +1357,20 @@ body {
     color: var(--color-crimson);
 }
 
-/* CARTEL DE INFORMACIÓN DEL LUGAR (dialog nativo) */
+/* ─────────────────────────────────────────────
+   CARTEL DE INFORMACIÓN DEL LUGAR (dialog nativo)
+   ───────────────────────────────────────────── */
 .place-dialog {
+    --accent: var(--color-crimson);
+    --accent-soft: var(--crimson-soft);
     position: fixed;
     inset: 0;
     margin: auto;
     width: min(440px, calc(100% - 32px));
     max-height: calc(100% - 32px);
     overflow-y: auto;
-    padding: 28px 24px 24px;
+    padding: 22px 24px 22px;
     border: none;
-    border-top: 6px solid var(--color-crimson);
     border-radius: var(--radius-lg);
     background-color: var(--color-white);
     color: var(--color-dark);
@@ -1169,15 +1384,15 @@ body {
 
 .place-dialog-close {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    border: none;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-soft);
     border-radius: 50%;
     background-color: var(--color-cream);
     color: var(--color-slate);
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -1186,21 +1401,62 @@ body {
 .place-dialog-close:hover,
 .place-dialog-close:focus-visible {
     background-color: var(--color-crimson);
+    border-color: var(--color-crimson);
     color: var(--color-white);
 }
 
-.place-dialog-title {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    color: var(--color-crimson);
-    line-height: 1.25;
-    padding-right: 44px; /* no pasar por debajo del botón de cerrar */
-    margin-bottom: 12px;
-    overflow-wrap: break-word;
+.place-dialog-head {
+    padding-right: 40px; /* no pasar por debajo del botón de cerrar */
+    margin-bottom: 14px;
+}
+
+.place-dialog-head .place-dialog-title {
+    font-size: 1.35rem;
+    line-height: 1.2;
 }
 
 .place-dialog-text {
     color: var(--color-slate);
+}
+
+/* Botones de idioma del cartel: ES · EN · PT */
+.place-dialog-lang {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    background-color: var(--color-cream);
+}
+
+.place-dialog-lang-btn {
+    min-width: 40px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-slate);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.place-dialog-lang-btn:hover {
+    color: var(--color-crimson);
+}
+
+.place-dialog-lang-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.place-dialog-lang-btn[aria-pressed="true"] {
+    background-color: var(--color-crimson);
+    color: var(--color-white);
 }
 
 /* Zona que "agranda el panel hacia abajo" al pulsar "Más información" */
@@ -1226,56 +1482,53 @@ body {
     border-top: 1px solid rgba(110, 106, 101, 0.15);
 }
 
+.place-dialog .ticket-divider {
+    --divider-gap: 18px;
+}
+
+/* Si ya no quedan botones abajo, tampoco la línea que los separa */
+.place-dialog .ticket-divider:has(+ .place-dialog-actions:not(:has(> :not(.hidden)))) {
+    display: none;
+}
+
 /* "Más información" e Instagram, uno al lado del otro */
 .place-dialog-actions {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 8px;
-    margin-top: 22px;
 }
 
 /* Botones angostos para que quepan lado a lado también en el teléfono */
 .place-dialog-actions > .place-dialog-more-btn {
     flex: 0 1 auto;
     min-width: 0;
-    padding: 10px 16px;
+    padding: 10px 18px;
     font-size: 0.9rem;
     text-align: center;
-    line-height: 1.2;
 }
 
 .place-dialog-actions:not(:has(> :not(.hidden))) {
     display: none;
 }
 
-/* Botón cuadrado solo con el logo de Instagram, del alto de "Más información" */
-.btn-instagram {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 0 10px;
-    color: var(--color-dark);
-    background-color: var(--color-white);
-    border: 1px solid var(--color-slate);
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-}
-
-.btn-instagram:hover,
-.btn-instagram:focus-visible {
-    background-color: var(--color-gold);
-    color: var(--color-white);
-    border-color: var(--color-gold);
-}
-
-.btn-instagram svg {
-    flex-shrink: 0;
+/* Instagram: botón redondo del alto de "Más información" */
+.place-dialog-actions > .btn-instagram {
+    width: 40px;
+    height: 40px;
 }
 
 @media (max-width: 480px) {
+    .place-dialog {
+        padding: 18px 18px 20px;
+    }
+
     .place-dialog-actions > .place-dialog-more-btn {
-        padding: 9px 12px;
-        font-size: 0.82rem;
+        padding: 9px 14px;
+        font-size: 0.85rem;
+    }
+
+    .panel-head h2 {
+        font-size: 1.45rem;
     }
 }
