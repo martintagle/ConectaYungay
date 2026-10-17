@@ -217,10 +217,15 @@ body {
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
+    /* Nombre y distancia arriba; datos a la izquierda y "Ver ruta" a la derecha */
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "name  dist"
+        "start start"
+        "meta  cta";
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 6px 12px;
     text-align: left;
     box-shadow: var(--shadow-sm);
 }
@@ -233,30 +238,48 @@ body {
     background-color: rgba(167, 48, 42, 0.02);
 }
 
-.route-option-main {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
 .route-option-name {
-    font-size: 1.05rem;
+    grid-area: name;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--color-crimson);
 }
 
 .route-option-start {
+    grid-area: start;
     font-size: 0.9rem;
     font-weight: 500;
 }
 
 .route-option-meta {
-    font-size: 0.8rem;
+    grid-area: meta;
+    display: flex;
+    flex-wrap: nowrap; /* paradas y largo siempre lado a lado */
+    gap: 6px;
+    min-width: 0;
+}
+
+.route-option-chip {
+    font-size: 0.78rem;
     color: var(--color-slate);
+    border: 1px solid rgba(110, 106, 101, 0.3);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.route-option-cta {
+    grid-area: cta;
+    justify-self: end;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-crimson);
+    white-space: nowrap;
 }
 
 .route-option-distance {
-    flex-shrink: 0;
+    grid-area: dist;
+    justify-self: end;
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--color-slate);
@@ -271,11 +294,61 @@ body {
     background: var(--color-sage);
 }
 
+/* Pantalla "Elige tu ruta" en el teléfono */
 @media (max-width: 480px) {
+    #welcome-screen {
+        padding: 12px;
+    }
+
+    #welcome-screen .welcome-card {
+        padding: 18px 18px 22px;
+    }
+
+    /* El PNG del logo trae mucho margen transparente arriba y abajo:
+       se recorta a la franja con el dibujo para acercar el título */
+    #welcome-screen .logo-welcome {
+        max-width: 210px;
+        aspect-ratio: 2.4 / 1;
+        object-fit: cover;
+        object-position: center 44%;
+        margin-bottom: 6px;
+    }
+
+    /* Título en una sola línea, con letra que se ajusta al ancho de la pantalla */
+    #welcome-screen .welcome-card h2 {
+        white-space: nowrap;
+        font-size: clamp(0.8rem, 4.6vw, 1.1rem);
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+    }
+
+    #welcome-screen .welcome-description {
+        font-size: 1rem;
+        margin-bottom: 18px;
+    }
+
     .route-option {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+        padding: 12px 14px;
+    }
+
+    .route-option-meta {
+        gap: 4px;
+    }
+
+    .route-option-chip {
+        font-size: 0.74rem;
+        padding: 2px 7px;
+    }
+}
+
+/* Teléfonos muy angostos: "Ver ruta →" queda solo como flecha para dar espacio */
+@media (max-width: 350px) {
+    .route-option-cta-text {
+        display: none;
+    }
+
+    .route-option-cta {
+        font-size: 1.1rem;
     }
 }
 
@@ -878,12 +951,14 @@ body {
     font-size: 1.8rem;
     color: var(--color-crimson);
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .discounts-subtitle {
     font-size: 0.95rem;
     color: var(--color-slate);
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .discounts-subtitle span {
@@ -898,102 +973,161 @@ body {
     gap: 16px;
 }
 
+/* Tarjeta de beneficio con forma de cupón: datos arriba, línea punteada con
+   muescas a los lados y, abajo, la distancia y los enlaces del local */
 .discount-card {
+    --accent: var(--color-gold);
+    --accent-soft: rgba(200, 138, 42, 0.15);
     background-color: var(--color-cream);
     border-radius: var(--radius-md);
-    border: 1px solid rgba(110, 106, 101, 0.1);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(110, 106, 101, 0.12);
     position: relative;
     overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.discount-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background-color: var(--color-gold);
+.discount-card--restaurante {
+    --accent: var(--color-crimson);
+    --accent-soft: rgba(167, 48, 42, 0.12);
+}
+
+.discount-card--heladeria {
+    --accent: var(--color-sage);
+    --accent-soft: rgba(102, 117, 77, 0.15);
 }
 
 .discount-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-md);
-    border-color: var(--color-gold);
+    border-color: var(--accent);
 }
 
-.discount-card-header {
+.discount-card-top {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 18px 14px;
+}
+
+.discount-icon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.discount-info {
+    min-width: 0;
 }
 
 .discount-category {
-    font-size: 0.85rem;
+    display: block;
+    font-size: 0.72rem;
     font-weight: 700;
-    color: var(--color-sage);
+    color: var(--accent);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.discount-distance {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--color-slate);
-    background-color: rgba(110, 106, 101, 0.08);
-    padding: 2px 8px;
-    border-radius: 20px;
-}
-
-.discount-card-body {
-    margin-bottom: 20px;
+    letter-spacing: 0.08em;
 }
 
 .discount-name {
-    font-size: 1.15rem;
+    font-size: 1.08rem;
     font-weight: 700;
     color: var(--color-dark);
-    margin-bottom: 5px;
-    line-height: 1.3;
+    line-height: 1.25;
+    margin: 2px 0 3px;
     overflow-wrap: break-word;
 }
 
 .discount-address {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--color-slate);
-    line-height: 1.4;
+    line-height: 1.35;
     overflow-wrap: break-word;
 }
 
-.discount-card-footer {
-    margin-top: auto;
+/* Línea punteada del cupón; los círculos del color del panel hacen las muescas */
+.discount-card-divider {
+    position: relative;
+    margin: 0 16px;
+    border-top: 2px dashed rgba(110, 106, 101, 0.22);
 }
 
-.btn-map-link {
-    display: inline-block;
-    width: 100%;
-    text-align: center;
+.discount-card-divider::before,
+.discount-card-divider::after {
+    content: '';
+    position: absolute;
+    top: -11px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
     background-color: var(--color-white);
-    color: var(--color-dark);
-    border: 1px solid var(--color-slate);
-    padding: 10px 15px;
-    font-size: 0.85rem;
+    border: 1px solid rgba(110, 106, 101, 0.12);
+}
+
+.discount-card-divider::before {
+    left: -27px;
+}
+
+.discount-card-divider::after {
+    right: -27px;
+}
+
+.discount-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 18px 16px;
+}
+
+.discount-distance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
     font-weight: 600;
-    border-radius: var(--radius-sm);
-    text-decoration: none;
+    color: var(--color-slate);
+}
+
+.discount-distance svg {
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+/* Google Maps, Instagram, web, carta... del local */
+.discount-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.btn-map-link,
+.btn-place-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    color: var(--color-dark);
+    background-color: var(--color-white);
+    border: 1px solid rgba(110, 106, 101, 0.35);
+    border-radius: 50%;
     transition: all 0.2s ease;
 }
 
-.btn-map-link:hover {
-    background-color: var(--color-crimson);
+.btn-map-link:hover,
+.btn-map-link:focus-visible,
+.btn-place-link:hover,
+.btn-place-link:focus-visible {
+    background-color: var(--accent);
     color: var(--color-white);
-    border-color: var(--color-crimson);
+    border-color: var(--accent);
 }
 
 /* FOOTER */
@@ -1092,6 +1226,56 @@ body {
     border-top: 1px solid rgba(110, 106, 101, 0.15);
 }
 
-.place-dialog-more-btn {
-    margin: 22px auto 0;
+/* "Más información" e Instagram, uno al lado del otro */
+.place-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+/* Botones angostos para que quepan lado a lado también en el teléfono */
+.place-dialog-actions > .place-dialog-more-btn {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.place-dialog-actions:not(:has(> :not(.hidden))) {
+    display: none;
+}
+
+/* Botón cuadrado solo con el logo de Instagram, del alto de "Más información" */
+.btn-instagram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0 10px;
+    color: var(--color-dark);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-slate);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.btn-instagram:hover,
+.btn-instagram:focus-visible {
+    background-color: var(--color-gold);
+    color: var(--color-white);
+    border-color: var(--color-gold);
+}
+
+.btn-instagram svg {
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .place-dialog-actions > .place-dialog-more-btn {
+        padding: 9px 12px;
+        font-size: 0.82rem;
+    }
 }

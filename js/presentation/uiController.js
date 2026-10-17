@@ -90,6 +90,8 @@ ConectaYungay.UI = (function () {
             DOM.welcomeScreen.classList.add('hidden');
             DOM.appScreen.classList.remove('hidden');
         }
+        // La pantalla nueva parte desde arriba, aunque la anterior estuviera desplazada
+        window.scrollTo(0, 0);
     }
 
     /**
@@ -178,6 +180,7 @@ ConectaYungay.UI = (function () {
         rutas.forEach((ruta, i) => {
             const detalles = [`${ruta.paradas} paradas`];
             if (Number.isFinite(ruta.metros)) detalles.push(`${formatMeters(ruta.metros)} a pie`);
+            const chips = detalles.map(d => `<span class="route-option-chip">${esc(d)}</span>`).join('');
 
             let distancia = '';
             if (Number.isFinite(ruta.distance)) {
@@ -190,12 +193,11 @@ ConectaYungay.UI = (function () {
             const li = document.createElement('li');
             li.innerHTML = `
                 <button type="button" class="route-option fade-in" data-route-id="${esc(ruta.id)}">
-                    <span class="route-option-main">
-                        <span class="route-option-name">${esc(ruta.nombre)}</span>
-                        <span class="route-option-start">Parte en ${esc(ruta.inicio.name)}</span>
-                        <span class="route-option-meta">${esc(detalles.join(' · '))}</span>
-                    </span>
+                    <span class="route-option-name">${esc(ruta.nombre)}</span>
                     ${distancia}
+                    <span class="route-option-start">Parte en ${esc(ruta.inicio.name)}</span>
+                    <span class="route-option-meta">${chips}</span>
+                    <span class="route-option-cta" aria-hidden="true"><span class="route-option-cta-text">Ver ruta </span>→</span>
                 </button>
             `;
             DOM.routesList.appendChild(li);
@@ -285,7 +287,7 @@ ConectaYungay.UI = (function () {
                 DOM.btnDownload.removeAttribute('disabled');
                 DOM.btnGenerate.removeAttribute('disabled');
             }
-        }, 600);
+        });
 
         // Si el mapa no está listo, no hay animación que reactive el botón: hacerlo aquí
         if (!started) {
@@ -328,7 +330,7 @@ ConectaYungay.UI = (function () {
         const activeEl = document.getElementById(`ui-node-${index}`);
         if (activeEl) {
             activeEl.classList.add('active');
-            activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            scrollNodeIntoList(activeEl);
         }
 
         // Capa de Negocio: calcular descuentos más cercanos (distancia a pie)
@@ -342,10 +344,69 @@ ConectaYungay.UI = (function () {
             .catch(e => console.error('Error al calcular descuentos:', e));
     }
 
+    // Muestra el hito dentro de la lista "Tu Ruta" moviendo solo la lista, no la
+    // página (scrollIntoView bajaba la pantalla y el visitante dejaba de ver el mapa)
+    function scrollNodeIntoList(el) {
+        const list = DOM.nodesContainer.getBoundingClientRect();
+        const item = el.getBoundingClientRect();
+        let delta = 0;
+        if (item.top < list.top) delta = item.top - list.top;
+        else if (item.bottom > list.bottom) delta = item.bottom - list.bottom;
+        if (delta) DOM.nodesContainer.scrollBy({ top: delta, behavior: 'smooth' });
+    }
+
     function formatDistance(meters, aproximada) {
         if (meters < 10) return 'A pasos';
-        return aproximada ? `A ~${meters} metros en línea recta` : `A ${meters} metros a pie`;
+        return aproximada ? `~${meters} m en línea recta` : `${meters} m a pie`;
     }
+
+    // Íconos de los enlaces de un local (Instagram, web, carta...): botones
+    // pequeños junto al del mapa para no recargar la tarjeta
+    const LINK_TYPES = {
+        instagram: { label: 'Instagram', icon: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/>' },
+        web:       { label: 'Sitio web', icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/>' },
+        menu:      { label: 'Carta', icon: '<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>' },
+        tour360:   { label: 'Recorrido virtual 360°', icon: '<ellipse cx="12" cy="12" rx="9" ry="4"/><path d="M12 3v18"/><path d="M17 15.5l2 1-1.2 1.9"/>' },
+        enlaces:   { label: 'Todos sus enlaces', icon: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>' }
+    };
+
+    // Logo de Google Maps (pin) para el botón de la dirección, con el mismo trazo que los demás íconos
+    const GOOGLE_MAPS_LOGO = `
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21.5c-1-2.6-2.6-4.4-4.2-6.4C6.4 13.4 5 11.8 5 9.2a7 7 0 0 1 14 0c0 2.6-1.4 4.2-2.8 5.9-1.6 2-3.2 3.8-4.2 6.4z"/>
+            <circle cx="12" cy="9.2" r="2.6"/>
+        </svg>`;
+
+    function renderPlaceLinks(links, placeName) {
+        if (!links || !links.length) return '';
+        const items = links.map(link => {
+            const type = LINK_TYPES[link.tipo];
+            const url = ConectaYungay.Security.sanitizeURL(link.url);
+            if (!type || url === '#') return '';
+            const safeLabel = ConectaYungay.Security.escapeHTML(`${type.label} de ${placeName}`);
+            return `
+                <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn-place-link"
+                   aria-label="${safeLabel}" title="${ConectaYungay.Security.escapeHTML(type.label)}">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${type.icon}</svg>
+                </a>`;
+        }).join('');
+        return items;
+    }
+
+    // Ícono de cada categoría (círculo de color a la izquierda de la tarjeta)
+    const CATEGORY_ICONS = {
+        cafeteria: '<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3.5c0 1.5 1 1.5 1 3M12 3.5c0 1.5 1 1.5 1 3"/>',
+        restaurante: '<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M17 21V3c-2.2 1.6-3.3 4.2-3.3 7.5V14H17"/>',
+        heladeria: '<path d="M8 12l4 9 4-9"/><path d="M7 12a5 5 0 0 1 10 0z"/>'
+    };
+
+    const WALK_ICON = `
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="13" cy="4" r="1.6"/><path d="M10 21l2-6 3 3v3"/><path d="M8 12l2.5-4 3 1.5 1.5 3 2.5 1"/><path d="M10.5 8l1.5 7"/>
+        </svg>`;
 
     // ─────────────────────────────────────────────
     //  RENDERIZAR TARJETAS DE DESCUENTO
@@ -354,9 +415,9 @@ ConectaYungay.UI = (function () {
         DOM.discountsContainer.innerHTML = '';
 
         const categories = [
-            { label: 'Cafetería', data: recs.cafeteria },
-            { label: 'Restaurante', data: recs.restaurante },
-            { label: 'Heladería', data: recs.heladeria }
+            { key: 'cafeteria', label: 'Cafetería', data: recs.cafeteria },
+            { key: 'restaurante', label: 'Restaurante', data: recs.restaurante },
+            { key: 'heladeria', label: 'Heladería', data: recs.heladeria }
         ];
 
         categories.forEach(cat => {
@@ -374,21 +435,30 @@ ConectaYungay.UI = (function () {
             const safeAddress = ConectaYungay.Security.escapeHTML(cat.data.address);
             const safeDistance = ConectaYungay.Security.escapeHTML(formatDistance(cat.data.distance, cat.data.aproximada));
 
-            const card = document.createElement('div');
-            card.className = 'discount-card fade-in';
+            const card = document.createElement('article');
+            card.className = `discount-card discount-card--${cat.key} fade-in`;
             card.innerHTML = `
-                <div class="discount-card-header">
-                    <span class="discount-category">${safeLabel}</span>
-                    <span class="discount-distance">${safeDistance}</span>
+                <div class="discount-card-top">
+                    <span class="discount-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${CATEGORY_ICONS[cat.key]}</svg>
+                    </span>
+                    <div class="discount-info">
+                        <span class="discount-category">${safeLabel}</span>
+                        <h4 class="discount-name">${safeName}</h4>
+                        <p class="discount-address">${safeAddress}</p>
+                    </div>
                 </div>
-                <div class="discount-card-body">
-                    <h4 class="discount-name">${safeName}</h4>
-                    <p class="discount-address">${safeAddress}</p>
-                </div>
-                <div class="discount-card-footer">
-                    <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-map-link">
-                        Ver dirección en el mapa
-                    </a>
+                <div class="discount-card-divider" aria-hidden="true"></div>
+                <div class="discount-card-bottom">
+                    <span class="discount-distance">${WALK_ICON}${safeDistance}</span>
+                    <div class="discount-actions">
+                        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-map-link"
+                           aria-label="Ver ${safeName} en Google Maps" title="Ver en Google Maps">
+                            ${GOOGLE_MAPS_LOGO}
+                        </a>
+                        ${renderPlaceLinks(cat.data.links, cat.data.name)}
+                    </div>
                 </div>
             `;
             DOM.discountsContainer.appendChild(card);

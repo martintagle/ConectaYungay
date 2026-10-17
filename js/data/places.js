@@ -9,6 +9,8 @@
  * (Nominatim/Overpass) y apuntan al edificio o a la cuadra del lugar.
  * "acceso" (opcional) es el punto de la calle frente al lugar por donde pasa el
  * trazado del recorrido; sin él, el trazado usa las coordenadas del lugar.
+ * "web" e "instagram" (opcionales): con web, el botón "Más información" del
+ * cartel abre esa página; con Instagram, el cartel suma un botón de Instagram.
  * Los textos vienen del documento "Barrio Yungay Histórico" (guiones informativos).
  * El nombre es la clave que usan los recorridos (ver routes.js).
  */
@@ -56,7 +58,9 @@ ConectaYungay.Data.LUGARES = {
     "Peluquería Francesa": {
         direccion: 'Compañía de Jesús 2789', lat: -33.440873, lng: -70.674105,
         acceso: { lat: -33.440940, lng: -70.674105 },
-        descripcion: 'Frente a la Plaza Yungay, en 1868, el francés Victorino Tauzán abrió una barbería que atendía al Consulado de Francia y a los vecinos: la Peluquería Francesa. Con los años pasó a la familia Lavaud, hoy en su cuarta generación. Aún conserva su aire de salón europeo, y hoy tiene también el restaurante Boulevard Lavaud. A pocos pasos, en Libertad 444, funciona la Casa Museo, con unos cinco mil objetos del oficio del peluquero y del cuidado personal: navajas, tijeras y un sillón de barbero. Este lugar es uno de los comercios históricos del barrio.'
+        descripcion: 'Frente a la Plaza Yungay, en 1868, el francés Victorino Tauzán abrió una barbería que atendía al Consulado de Francia y a los vecinos: la Peluquería Francesa. Con los años pasó a la familia Lavaud, hoy en su cuarta generación. Aún conserva su aire de salón europeo, y hoy tiene también el restaurante Boulevard Lavaud. A pocos pasos, en Libertad 444, funciona la Casa Museo, con unos cinco mil objetos del oficio del peluquero y del cuidado personal: navajas, tijeras y un sillón de barbero. Este lugar es uno de los comercios históricos del barrio.',
+        web: 'https://peluqueriafrancesa.com/',
+        instagram: 'https://www.instagram.com/peluqueriafrancesa/'
     },
     "Casa del Maestro": {
         direccion: 'Catedral 2395', lat: -33.439104, lng: -70.670165,
@@ -100,27 +104,33 @@ ConectaYungay.Data.LUGARES = {
     "Espacio 330": {
         direccion: 'Maipú 330', lat: -33.441964, lng: -70.676637,
         acceso: { lat: -33.441964, lng: -70.676500 },
-        descripcion: 'Estás frente a Espacio 330, en Maipú 330, entre Huérfanos y Compañía. Dentro de este espacio funciona una asociación cultural sin fines de lucro, fundada en 2019, que opera como sala de exposiciones. Aquí se hacen muestras de arte, performance, micro-conciertos, lanzamientos de libros y proyecciones, siempre a escala de barrio y junto a los vecinos. Te invitamos a pasar para que descubras la exposición disponible.'
+        descripcion: 'Estás frente a Espacio 330, en Maipú 330, entre Huérfanos y Compañía. Dentro de este espacio funciona una asociación cultural sin fines de lucro, fundada en 2019, que opera como sala de exposiciones. Aquí se hacen muestras de arte, performance, micro-conciertos, lanzamientos de libros y proyecciones, siempre a escala de barrio y junto a los vecinos. Te invitamos a pasar para que descubras la exposición disponible.',
+        instagram: 'https://www.instagram.com/espacio330/'
     },
     "Museo Taller": {
         direccion: 'Compañía de Jesús 2784', lat: -33.441109, lng: -70.674051,
         acceso: { lat: -33.440934, lng: -70.674051 },
-        descripcion: 'Estás frente al Museo Taller, en Compañía de Jesús 2784. Esta casona es museo, escuela y taller de oficios manuales. Su fundador, Francisco Dittborn, lleva más de treinta años reuniendo herramientas y máquinas: ya son más de cinco mil. Y en sus terrenos crece un bosque plantado con el método Miyawaki. ¿Te animas a pasar? Abre de martes a domingo, de 10 a 18 horas, y el último tour sale a las 17:10. Dura 90 minutos, cuesta cinco mil pesos, y te llevas lo que armas: una locomotora, un vagón o un telar de cintura.'
+        descripcion: 'Estás frente al Museo Taller, en Compañía de Jesús 2784. Esta casona es museo, escuela y taller de oficios manuales. Su fundador, Francisco Dittborn, lleva más de treinta años reuniendo herramientas y máquinas: ya son más de cinco mil. Y en sus terrenos crece un bosque plantado con el método Miyawaki. ¿Te animas a pasar? Abre de martes a domingo, de 10 a 18 horas, y el último tour sale a las 17:10. Dura 90 minutos, cuesta cinco mil pesos, y te llevas lo que armas: una locomotora, un vagón o un telar de cintura.',
+        web: 'https://www.museotaller.cl/',
+        instagram: 'https://www.instagram.com/museotaller/'
     },
     "Yungay Histórico": {
         direccion: 'Huérfanos 2896', lat: -33.442414, lng: -70.675240,
         acceso: { lat: -33.442300, lng: -70.675240 },
-        descripcion: 'Estás frente a Yungay Histórico, en Huérfanos 2896. Esta casona se construyó en 1924, obra del arquitecto Alberto Cruz Montt, uno de los mismos que diseñó el pasaje Adriana Cousiño, a pocas cuadras de aquí. Fíjate en su estilo, una mezcla de neoclásico y art déco, y en sus detalles decorativos. Tiene tres pisos y hoy se usa para eventos y actividades culturales. Más de cien años después, sigue siendo parte de la historia del barrio.'
+        descripcion: 'Estás frente a Yungay Histórico, en Huérfanos 2896. Esta casona se construyó en 1924, obra del arquitecto Alberto Cruz Montt, uno de los mismos que diseñó el pasaje Adriana Cousiño, a pocas cuadras de aquí. Fíjate en su estilo, una mezcla de neoclásico y art déco, y en sus detalles decorativos. Tiene tres pisos y hoy se usa para eventos y actividades culturales. Más de cien años después, sigue siendo parte de la historia del barrio.',
+        web: 'https://yungayhistorico.cl/'
     },
     "DecoCalen": {
         direccion: 'Compañía de Jesús 2858', lat: -33.441140, lng: -70.674933,
         acceso: { lat: -33.441033, lng: -70.674933 },
-        descripcion: 'Estás frente a DecoCalen, en Compañía 2858. Aquí se reúne un colectivo de 107 artesanos de las regiones de Los Lagos y Santiago, enfocados en el reciclaje. Si entras, vas a encontrar lana de oveja hilada, maderas nativas, cosmética vegetal, ropa y productos gourmet, como ajo chilote y mermeladas de murta o de rosa mosqueta. Arriba, en el altillo, hay una galería de arte llamada La Palomera, con exposiciones de artistas locales. Anímate a pasar: abre miércoles, jueves y domingo de 11 a 19 horas, y viernes y sábado de 12 a 20.'
+        descripcion: 'Estás frente a DecoCalen, en Compañía 2858. Aquí se reúne un colectivo de 107 artesanos de las regiones de Los Lagos y Santiago, enfocados en el reciclaje. Si entras, vas a encontrar lana de oveja hilada, maderas nativas, cosmética vegetal, ropa y productos gourmet, como ajo chilote y mermeladas de murta o de rosa mosqueta. Arriba, en el altillo, hay una galería de arte llamada La Palomera, con exposiciones de artistas locales. Anímate a pasar: abre miércoles, jueves y domingo de 11 a 19 horas, y viernes y sábado de 12 a 20.',
+        instagram: 'https://www.instagram.com/decocalen/'
     },
     "Casona Compañía": {
         direccion: 'Compañía de Jesús 2820', lat: -33.441143, lng: -70.674440,
         acceso: { lat: -33.440978, lng: -70.674440 },
-        descripcion: 'Estás frente a Casona Compañía, en Compañía de Jesús 2820, y a un costado te espera un mural: «Despertar», del artista ROMOKO. La casona es un espacio patrimonial de 600 metros cuadrados, abierto desde 2019 a la creación y la colaboración, con exposiciones, ferias y shows. Fíjate en su fachada, de aire gótico o neocolonial. Anímate a entrar al Café Cité, de lunes a viernes de 8:30 a 21 horas y fines de semana de 9 a 19:30.'
+        descripcion: 'Estás frente a Casona Compañía, en Compañía de Jesús 2820, y a un costado te espera un mural: «Despertar», del artista ROMOKO. La casona es un espacio patrimonial de 600 metros cuadrados, abierto desde 2019 a la creación y la colaboración, con exposiciones, ferias y shows. Fíjate en su fachada, de aire gótico o neocolonial. Anímate a entrar al Café Cité, de lunes a viernes de 8:30 a 21 horas y fines de semana de 9 a 19:30.',
+        instagram: 'https://www.instagram.com/casonacompania/'
     },
     "Museo de Arte Contemporáneo (MAC)": {
         direccion: 'Av. Matucana 464', lat: -33.442137, lng: -70.680588,
@@ -130,6 +140,7 @@ ConectaYungay.Data.LUGARES = {
     "Club Yungay": {
         direccion: 'Av. Portales 2601', lat: -33.442769, lng: -70.672321,
         acceso: { lat: -33.442845, lng: -70.672321 },
-        descripcion: 'Estás frente a Club Yungay, en Avenida Portales 2601. Empezó como un café, luego fue un bar de fútbol y hoy es también un museo de banderines: más de mil, de Chile y del mundo, reunidos por sus fundadores, Mariano y Leo. Aquí el número 10 de un club amateur vale lo mismo que el de la selección, porque se rinde homenaje al fútbol de todas las categorías. Anímate a entrar: abre de 18 a 23 horas, y puedes recorrer la colección con sus curiosidades.'
+        descripcion: 'Estás frente a Club Yungay, en Avenida Portales 2601. Empezó como un café, luego fue un bar de fútbol y hoy es también un museo de banderines: más de mil, de Chile y del mundo, reunidos por sus fundadores, Mariano y Leo. Aquí el número 10 de un club amateur vale lo mismo que el de la selección, porque se rinde homenaje al fútbol de todas las categorías. Anímate a entrar: abre de 18 a 23 horas, y puedes recorrer la colección con sus curiosidades.',
+        instagram: 'https://www.instagram.com/clubyungay/'
     }
 };

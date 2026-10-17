@@ -23,6 +23,18 @@ ConectaYungay.MapRenderer = (function () {
     const COLOR_GOLD    = '#C88A2A';
     const COLOR_CREAM   = '#F6EFE4';
 
+    // Ritmo de la animación del recorrido
+    const METERS_PER_SECOND = 150;  // velocidad con que avanza la línea
+    const LEG_MIN_MS        = 500;  // un tramo muy corto igual se alcanza a ver
+    const LEG_MAX_MS        = 2000; // un tramo muy largo no se hace eterno
+    const STOP_PAUSE_MS     = 180;  // pausa en cada parada antes del tramo siguiente
+    const FIRST_PAN_MS      = 500;  // desplazamiento inicial hasta la primera parada
+
+    // Acelera al salir de una parada y frena al llegar a la siguiente
+    function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
     /**
      * Crea el ícono SVG personalizado para los nodos del recorrido
      * @param {boolean} isActive - Si es el nodo activo (rojo) o pasado (dorado)
@@ -101,10 +113,9 @@ ConectaYungay.MapRenderer = (function () {
      * @param {Object}   geometry    - { tramos, aproximada } (ver Service.getRouteGeometry);
      *                                 tramos[i] une el hito i con el i+1
      * @param {Function} onNodeAdded - Callback al agregar cada hito
-     * @param {number}   legMs       - Milisegundos que tarda en dibujarse cada tramo
      * @returns {boolean} true si la animación arrancó; false si el mapa no está listo
      */
-    function animateRoute(routeNodes, geometry, onNodeAdded, legMs = 600) {
+    function animateRoute(routeNodes, geometry, onNodeAdded) {
         if (!map) return false;
         clearRoute();
         const run = animationRun;
@@ -120,6 +131,11 @@ ConectaYungay.MapRenderer = (function () {
             lineCap:   'round',
             dashArray: geometry.aproximada ? '8 8' : null
         }).addTo(map);
+
+        // El mapa sigue la punta de la línea mientras se dibuja; si el visitante
+        // arrastra el mapa, deja de seguirla para no quitarle el control
+        let follow = true;
+        map.once('dragstart', () => { if (run === animationRun) follow = false; });
 
         function addNode() {
             if (run !== animationRun) return;
@@ -156,34 +172,60 @@ ConectaYungay.MapRenderer = (function () {
                 }).addTo(map));
             }
 
-            if (animatedCount === 0) {
-                map.panTo([node.lat, node.lng], { animate: true, duration: 0.5 });
-            }
+            const first = animatedCount === 0;
+            if (first) map.panTo([node.lat, node.lng], { animate: true, duration: FIRST_PAN_MS / 1000 });
 
             animatedCount++;
             if (onNodeAdded) onNodeAdded(node, animatedCount - 1);
 
+            // Sin acercar ni alejar: el mapa solo se desplaza con la ruta y queda en el último punto.
+            // Tras una pausa breve en la parada (o al terminar el primer desplazamiento) sigue el tramo
             if (animatedCount < currentRoute.length) {
-                drawLeg(geometry.tramos[animatedCount - 1] || [], addNode);
-            } else {
-                // Al terminar: centrar el mapa para ver toda la ruta
-                const bounds = routePolyline.getBounds();
-                markers.forEach(m => bounds.extend(m.getLatLng()));
-                map.fitBounds(bounds, { padding: [40, 40], animate: true });
+                const leg = geometry.tramos[animatedCount - 1] || [];
+                setTimeout(() => drawLeg(leg, addNode), first ? FIRST_PAN_MS : STOP_PAUSE_MS);
             }
         }
 
-        // Dibuja los puntos del tramo de a poco durante legMs y luego llama a done
+        // Dibuja el tramo avanzando la punta de forma continua por la calle (no de
+        // vértice en vértice), a velocidad pareja y frenando suave al llegar a la parada
         function drawLeg(points, done) {
+            if (run !== animationRun) return;
+            const latlngs = points.map(p => L.latLng(p));
+            if (latlngs.length < 2) {
+                latlngs.forEach(p => routePolyline.addLatLng(p));
+                done();
+                return;
+            }
+
+            // Distancia acumulada hasta cada vértice, en metros
+            const acc = [0];
+            for (let i = 1; i < latlngs.length; i++) acc.push(acc[i - 1] + latlngs[i - 1].distanceTo(latlngs[i]));
+            const total = acc[acc.length - 1];
+            const duration = Math.min(LEG_MAX_MS, Math.max(LEG_MIN_MS, total / METERS_PER_SECOND * 1000));
+
+            const drawnBefore = routePolyline.getLatLngs().slice();
             const start = performance.now();
-            let drawn = 0;
+            let seg = 0;
+
             function step(now) {
                 if (run !== animationRun) return;
-                const target = Math.min(points.length, Math.ceil(points.length * (now - start) / legMs));
-                for (; drawn < target; drawn++) routePolyline.addLatLng(points[drawn]);
-                if (drawn < points.length) {
+                const t = Math.min(1, (now - start) / duration);
+                const d = easeInOut(t) * total;
+                while (seg < acc.length - 2 && acc[seg + 1] < d) seg++;
+
+                // Punta interpolada dentro del segmento actual
+                const a = latlngs[seg], b = latlngs[seg + 1];
+                const segLen = acc[seg + 1] - acc[seg];
+                const f = segLen ? (d - acc[seg]) / segLen : 1;
+                const tip = L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f);
+
+                routePolyline.setLatLngs(drawnBefore.concat(latlngs.slice(0, seg + 1), [tip]));
+                if (follow) map.panTo(tip, { animate: false });
+
+                if (t < 1) {
                     requestAnimationFrame(step);
                 } else {
+                    routePolyline.setLatLngs(drawnBefore.concat(latlngs));
                     done();
                 }
             }
