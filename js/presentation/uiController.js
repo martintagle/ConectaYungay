@@ -18,6 +18,8 @@ ConectaYungay.UI = (function () {
     let routeGeometry = null; // promesa con el trazado por las calles de la ruta actual
     let discountsList = [];
     let discountsRequest = 0; // descarta respuestas de descuentos de un hito anterior
+    let discountPicks = {};   // índice del hito → promesa con los locales elegidos para él
+    const timesShown = {};    // local → veces mostrado en esta visita (reparte la promoción)
     let locationRequest = 0;  // descarta ubicaciones pedidas antes de la última
     let currentRoute = null;  // { id, nombre } de la ruta elegida
     let mapInitialized = false;
@@ -270,6 +272,7 @@ ConectaYungay.UI = (function () {
         DOM.btnDownload.setAttribute('disabled', 'true');
         DOM.nodesContainer.innerHTML = '<p class="placeholder-text">Haz clic en "Generar Recorrido" para trazar la ruta en el mapa.</p>';
         discountsRequest++;
+        discountPicks = {};
         DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Los descuentos aparecerán al iniciar el recorrido.</p>';
         DOM.selectedNodeLabel.textContent = 'ninguna todavía';
     }
@@ -289,10 +292,12 @@ ConectaYungay.UI = (function () {
         const geometry = await routeGeometry; // nunca rechaza: sin servicio usa líneas rectas
         if (route !== currentRoute) return; // el visitante cambió de ruta mientras se esperaba
         DOM.nodesContainer.innerHTML = '';
+        discountPicks = {}; // al volver a trazar, los hitos pueden mostrar otros locales
 
         const started = ConectaYungay.MapRenderer.animateRoute(routeNodes, geometry, (node, index) => {
             appendNodeToList(node, index);
-            selectActiveNode(index);
+            // "Date un break" queda en el primer hito; los demás se eligen con un clic
+            if (index === 0) selectActiveNode(index);
 
             if (index === routeNodes.length - 1) {
                 DOM.btnDownload.removeAttribute('disabled');
@@ -353,13 +358,21 @@ ConectaYungay.UI = (function () {
 
         // Capa de Negocio: calcular descuentos más cercanos (distancia a pie)
         const request = ++discountsRequest;
-        DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Buscando los locales más cercanos...</p>';
-        ConectaYungay.Service.getClosestDiscounts(node, discountsList)
+        DOM.discountsContainer.innerHTML = '<p class="placeholder-text">Buscando locales cercanos...</p>';
+        // Cada hito conserva sus locales: al volver a él se ven los mismos
+        if (!discountPicks[index]) {
+            discountPicks[index] = ConectaYungay.Service.getClosestDiscounts(node, discountsList, timesShown);
+        }
+        const picks = discountPicks[index];
+        picks
             .then(recs => {
                 // Si el visitante ya eligió otro hito, no pisar sus descuentos
                 if (request === discountsRequest) renderDiscountsUI(recs);
             })
-            .catch(e => console.error('Error al calcular descuentos:', e));
+            .catch(e => {
+                if (discountPicks[index] === picks) delete discountPicks[index];
+                console.error('Error al calcular descuentos:', e);
+            });
     }
 
     // Muestra el hito dentro de la lista "Tu Ruta" moviendo solo la lista, no la

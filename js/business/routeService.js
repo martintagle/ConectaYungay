@@ -303,16 +303,25 @@ ConectaYungay.Service = (function () {
         }
     }
 
+    // Un local entra en la rotación de un hito si queda a lo más DISCOUNT_SLACK_M
+    // metros más lejos que el más cercano de su categoría, o a menos de
+    // DISCOUNT_NEAR_M caminando. Así se promocionan todos sin alejarse de la ruta.
+    const DISCOUNT_SLACK_M = 150;
+    const DISCOUNT_NEAR_M = 250;
+
     /**
-     * Elige la cafetería, el restaurante y la heladería más cercanos a un hito,
+     * Elige una cafetería, un restaurante y una heladería cerca de un hito,
      * según la distancia CAMINANDO por las calles (no en línea recta).
+     * Entre los locales que quedan casi igual de cerca, prefiere el que menos
+     * se ha mostrado (desempate al azar), para repartir la promoción entre todos.
      * Orden de fuentes: tabla precalculada → servicio de rutas → línea recta.
      * Con línea recta marca "aproximada: true" para que la vista lo indique.
      * @param {Object} node - Hito { name, lat, lng }
      * @param {Array} discountsList - Lista de locales (ver getDiscounts)
+     * @param {Object} [timesShown] - nombre del local → veces mostrado; se actualiza con los elegidos
      * @returns {Promise<{cafeteria, restaurante, heladeria}>} cada uno con "distance" en metros
      */
-    async function getClosestDiscounts(node, discountsList) {
+    async function getClosestDiscounts(node, discountsList, timesShown = {}) {
         let distances = lookupWalkingDistances(node.name, discountsList);
         let aproximada = false;
         if (!distances) {
@@ -326,20 +335,29 @@ ConectaYungay.Service = (function () {
             }
         }
 
-        const closest = { cafeterias: null, restaurantes: null, heladerias: null };
+        const byCategory = { cafeterias: [], restaurantes: [], heladerias: [] };
         discountsList.forEach((place, i) => {
             // El servicio devuelve null si no encuentra camino a pie hacia ese local
-            if (distances[i] === null || !(place.category in closest)) return;
-            const distance = Math.round(distances[i]);
-            if (!closest[place.category] || distance < closest[place.category].distance) {
-                closest[place.category] = { ...place, distance, aproximada };
-            }
+            if (distances[i] === null || !(place.category in byCategory)) return;
+            byCategory[place.category].push({ ...place, distance: Math.round(distances[i]), aproximada });
         });
 
+        const pick = (candidates) => {
+            if (!candidates.length) return null;
+            const nearest = Math.min(...candidates.map(c => c.distance));
+            const limit = Math.max(nearest + DISCOUNT_SLACK_M, DISCOUNT_NEAR_M);
+            const pool = candidates.filter(c => c.distance <= limit);
+            const fewest = Math.min(...pool.map(c => timesShown[c.name] || 0));
+            const options = pool.filter(c => (timesShown[c.name] || 0) === fewest);
+            const chosen = options[Math.floor(Math.random() * options.length)];
+            timesShown[chosen.name] = fewest + 1;
+            return chosen;
+        };
+
         return {
-            cafeteria: closest.cafeterias,
-            restaurante: closest.restaurantes,
-            heladeria: closest.heladerias
+            cafeteria: pick(byCategory.cafeterias),
+            restaurante: pick(byCategory.restaurantes),
+            heladeria: pick(byCategory.heladerias)
         };
     }
 
