@@ -10,7 +10,12 @@ create table visitas (
   motivo        text not null check (char_length(motivo) <= 60),
   -- ruta elegida; 'cumming' / 'quintanormal' son de visitas anteriores al 2026-10-13
   origen        text check (origen in ('cumming','quintanormal','ruta-a','ruta-b','ruta-c','ruta-d')),
-  check (comuna is null or nacionalidad = 'Chile')
+  -- agregadas el 2026-11-04; nulas en visitas anteriores
+  como_nos_conociste      text check (como_nos_conociste in ('Instagram','Otros')),
+  como_nos_conociste_otro text check (char_length(como_nos_conociste_otro) <= 60),
+  check (comuna is null or nacionalidad = 'Chile'),
+  constraint visitas_conociste_otro_check
+    check (como_nos_conociste_otro is null or como_nos_conociste = 'Otros')
 );
 
 create table clics_info (

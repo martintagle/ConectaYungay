@@ -78,6 +78,9 @@ ConectaYungay.VisitService = (function () {
             nacionalidad: respuestas.nacionalidad,
             comuna: respuestas.comuna,
             motivo: respuestas.motivo,
+            // Respuestas guardadas antes de esta pregunta no traen el campo
+            como_nos_conociste: respuestas.conociste || null,
+            como_nos_conociste_otro: respuestas.conocisteOtro || null,
             origen
         };
 

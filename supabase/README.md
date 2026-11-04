@@ -10,5 +10,8 @@ script SQL que crea las tablas de la base de datos en Supabase
   aperturas del cartel contra clics en "Más información" por lugar.
 - `2026-10-13_origen_rutas.sql`: migración que permite guardar como `origen`
   la ruta elegida (`ruta-a` … `ruta-d`) en vez de la estación de metro.
+- `2026-11-04_como_nos_conociste.sql`: migración que agrega las columnas
+  `como_nos_conociste` (`Instagram` / `Otros`) y `como_nos_conociste_otro`
+  (texto libre cuando se elige `Otros`) a `visitas`.
 - La conexión a la base (URL + clave publicable) vive en la capa de negocio:
   `js/business/visitService.js`.
