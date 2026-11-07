@@ -13,10 +13,8 @@
  *
  * Los errores de red no bloquean la app: solo se registran en consola.
  *
- * Conexión a Supabase: la clave publicable (anon) es pública por diseño. La
- * protección real está en las tablas: RLS activo y una política que solo
- * permite INSERT a usuarios anónimos (ver supabase/visitas_y_clics.sql).
- * Nadie puede leer los datos desde el navegador.
+ * Las filas se envían a api/registrar.php, que las valida y las inserta en
+ * MySQL. El endpoint solo permite insertar: no devuelve datos de la base.
  */
 
 window.ConectaYungay = window.ConectaYungay || {};
@@ -24,8 +22,6 @@ window.ConectaYungay = window.ConectaYungay || {};
 ConectaYungay.VisitService = (function () {
     const RESPUESTAS_KEY = 'conectayungay_respuestas';
 
-    const SUPABASE_URL = 'https://nsevebyyjlixehekoqxi.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_b1o9cpMZKk9uZu9Ov8gwqw_atm0K_HQ';
     const TIMEOUT_MS = 8000;
 
     // Promesa con el id de la visita en curso (null si no hay visita o no se guardó)
@@ -109,32 +105,27 @@ ConectaYungay.VisitService = (function () {
     }
 
     // ─────────────────────────────────────────────
-    //  SUPABASE
+    //  REGISTRO EN EL SERVIDOR
     // ─────────────────────────────────────────────
     /**
-     * Inserta una fila en una tabla de Supabase.
+     * Envía una fila a api/registrar.php para insertarla en la tabla indicada.
      * @param {'visitas'|'clics_info'} tabla
      * @param {object} fila
-     * @returns {Promise<void>} rechaza si Supabase responde con error o no hay conexión
+     * @returns {Promise<void>} rechaza si el servidor responde con error o no hay conexión
      */
     async function insertar(tabla, fila) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabla}`, {
+            const res = await fetch('api/registrar.php', {
                 method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(fila),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tabla, fila }),
                 signal: controller.signal
             });
             if (!res.ok) {
-                throw new Error(`Supabase respondió ${res.status} al insertar en ${tabla}`);
+                throw new Error(`El servidor respondió ${res.status} al insertar en ${tabla}`);
             }
         } finally {
             clearTimeout(timer);

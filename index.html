@@ -10,8 +10,8 @@
 
     <!-- ═══════════════════════════════════════════════════════════
          CAPA DE SEGURIDAD — FRONTEND
-         Hosting: GitHub Pages. Los headers HTTP no son configurables ahí,
-         así que solo se usan controles que funcionan desde <meta> o JS.
+         Hosting: SiteGround. Los controles de esta capa están definidos
+         desde <meta> o JS, sin depender de headers HTTP del servidor.
          ═══════════════════════════════════════════════════════════ -->
 
     <!-- 1. Forzar HTTPS (script externo para no necesitar 'unsafe-inline' en la CSP) -->
@@ -27,15 +27,15 @@
          Bloquea: scripts inline, scripts de otros orígenes, objects, iframes.
          Nota: 'unsafe-inline' en style-src se mantiene porque Leaflet
          aplica estilos inline por JS. frame-ancestors (anti-clickjacking)
-         no se puede definir en <meta>: en GitHub Pages no hay headers HTTP
-         propios, así que esa protección queda limitada. -->
+         no se puede definir en <meta>: requiere un header HTTP del
+         servidor, que esta página no configura. -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src  'self' https://unpkg.com https://cdnjs.cloudflare.com;
         style-src   'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
         font-src    'self' https://fonts.gstatic.com;
         img-src     'self' data: https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com;
-        connect-src 'self' https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com https://routing.openstreetmap.de https://nsevebyyjlixehekoqxi.supabase.co;
+        connect-src 'self' https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com https://routing.openstreetmap.de;
         frame-src   'none';
         object-src  'none';
         base-uri    'self';
@@ -349,7 +349,7 @@
     <script src="js/data/discounts.js"></script>
     <script src="js/data/walkingDistances.js"></script>
     <script src="js/data/surveyCatalogs.js"></script>
-    <!-- 2. Negocio — consultas, filtros, distancias y conexión a Supabase -->
+    <!-- 2. Negocio — consultas, filtros, distancias y registro de visitas (api/registrar.php) -->
     <script src="js/business/routeService.js"></script>
     <script src="js/business/visitService.js"></script>
     <!-- 3. Presentación — vistas; solo llaman a la capa de negocio -->
@@ -360,4 +360,4 @@
     <script src="js/presentation/uiController.js"></script>
 </body>
 
-</html>
+</html>
