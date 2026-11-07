@@ -1,0 +1,65 @@
+# ConectaYungay — Despliegue automático a SiteGround
+#
+# Cada push a "main" sube la página a:
+#   conectayungay.distritoyungay.com/public_html
+# Solo se publican index.html, assets/, css/, js/ y api/.
+# config.php vive FUERA de public_html, así que este despliegue nunca lo toca.
+#
+# Secrets necesarios (Settings → Secrets and variables → Actions):
+#   SG_HOST     servidor SSH de SiteGround (ej. ssh.distritoyungay.com)
+#   SG_PORT     puerto SSH (en SiteGround es 18765)
+#   SG_USER     usuario SSH (ej. u1234-abcdefgh)
+#   SG_PATH     carpeta de destino (ej. www/conectayungay.distritoyungay.com/public_html)
+#   SG_SSH_KEY  clave privada SSH (contenido completo de la clave sin passphrase)
+
+name: Desplegar en SiteGround
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # permite desplegar a mano desde la pestaña Actions
+
+# Nunca dos despliegues al mismo tiempo
+concurrency:
+  group: desplegar-siteground
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar los archivos a publicar
+        run: |
+          mkdir sitio
+          cp -r index.html assets css js api sitio/
+
+      - name: Configurar SSH
+        env:
+          SG_SSH_KEY: ${{ secrets.SG_SSH_KEY }}
+          SG_HOST: ${{ secrets.SG_HOST }}
+          SG_PORT: ${{ secrets.SG_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SG_SSH_KEY" > ~/.ssh/siteground
+          chmod 600 ~/.ssh/siteground
+          ssh-keyscan -p "$SG_PORT" "$SG_HOST" >> ~/.ssh/known_hosts
+
+      # --delete borra en el servidor lo que ya no existe en el repo, pero
+      # respeta .htaccess, .well-known (SSL) y .user.ini que crea SiteGround.
+      - name: Subir a SiteGround
+        env:
+          SG_HOST: ${{ secrets.SG_HOST }}
+          SG_PORT: ${{ secrets.SG_PORT }}
+          SG_USER: ${{ secrets.SG_USER }}
+          SG_PATH: ${{ secrets.SG_PATH }}
+        run: |
+          rsync -rlvz --delete \
+            --chmod=D755,F644 \
+            --exclude='.htaccess' \
+            --exclude='.well-known' \
+            --exclude='.user.ini' \
+            -e "ssh -i ~/.ssh/siteground -p $SG_PORT" \
+            sitio/ "$SG_USER@$SG_HOST:$SG_PATH/"
