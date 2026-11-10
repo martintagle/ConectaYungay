@@ -36,6 +36,9 @@ ConectaYungay.Data.DESCUENTOS = [
     { category: 'cafeterias',   name: 'Café Brunet',                   address: 'Compañía de Jesús 2695',          lat: -33.440731, lng: -70.673192,
       links: [{ tipo: 'instagram', url: 'https://www.instagram.com/cafe.brunet/' },
               { tipo: 'web',       url: 'https://cafebrunet.cl/' }] },
+    { category: 'cafeterias',   name: 'Espacio 330',                   address: 'Maipú 330',                       lat: -33.441964, lng: -70.676637,
+      links: [{ tipo: 'instagram', url: 'https://www.instagram.com/espacio330/' },
+              { tipo: 'web',       url: 'https://artistasyungay.cl/archivo-espacios/espacio-330/' }] },
     { category: 'restaurantes', name: 'Restaurante El Verde',          address: 'Huérfanos 3020',                  lat: -33.442250, lng: -70.676650,
       links: [{ tipo: 'instagram', url: 'https://www.instagram.com/el_verde/' }] },
     { category: 'restaurantes', name: 'Restaurante Zarita',            address: 'Compañía de Jesús 3023',          lat: -33.441186, lng: -70.676866,
@@ -62,6 +65,11 @@ ConectaYungay.Data.DESCUENTOS = [
     { category: 'restaurantes', name: 'Boulevard Lavaud Restaurant',   address: 'Compañía de Jesús 2789',          lat: -33.440880, lng: -70.674021,
       links: [{ tipo: 'instagram', url: 'https://www.instagram.com/peluqueriafrancesa/' },
               { tipo: 'web',       url: 'https://peluqueriafrancesa.com/' }] },
+    { category: 'restaurantes', name: 'Club Yungay',                   address: 'Av. Portales 2601',               lat: -33.442769, lng: -70.672321,
+      links: [{ tipo: 'instagram', url: 'https://www.instagram.com/clubyungay/' },
+              { tipo: 'web',       url: 'https://festigol.cl/club-yungay/' }] },
+    { category: 'restaurantes', name: 'Yungay Histórico',              address: 'Huérfanos 2896',                  lat: -33.442414, lng: -70.675240,
+      links: [{ tipo: 'web',       url: 'https://yungayhistorico.cl/' }] },
     { category: 'restaurantes', name: 'La Trova',                      address: 'Av. Portales 2683',               lat: -33.442842, lng: -70.673005,
       links: [{ tipo: 'web',       url: 'https://www.boulevardpatioyungay.cl/bar-la-trova/' }] }
 ];

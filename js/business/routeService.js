@@ -21,6 +21,7 @@ ConectaYungay.Service = (function () {
             rutas.push({
                 id: r.id,
                 nombre: r.nombre,
+                letra: r.letra || r.id.replace(/^ruta-/, '').toUpperCase(),
                 paradas: paradas.length,
                 metros: getRouteLength(r.id),
                 inicio: { name: parada.lugar, lat: lugar.lat, lng: lugar.lng }
@@ -95,7 +96,8 @@ ConectaYungay.Service = (function () {
             isStation: !!c.esEstacion,
             lat: c.lat,
             lng: c.lng,
-            acceso: c.acceso || null
+            acceso: c.acceso || null,
+            breaks: parada.breaks || c.breaks || null
         }));
     }
 
@@ -309,6 +311,34 @@ ConectaYungay.Service = (function () {
     const DISCOUNT_SLACK_M = 150;
     const DISCOUNT_NEAR_M = 250;
 
+    const BREAK_ALIASES = {
+        'el huaso enrique': 'restaurant el huaso enrique',
+        'zarita': 'restaurante zarita',
+        'teteria cleopatra': 'la teteria cleopatra',
+        'espacio gargola': 'restaurante la gargola',
+        'chancho seis': 'el chancho seis',
+        'el verde que te quiero verde': 'restaurante el verde',
+        'el verd equ ete quiero verde': 'restaurante el verde',
+        'restaurant el putamadre': 'el putamadre restorant',
+        'restaurante el putamadre': 'el putamadre restorant',
+        'darkolics': 'darkolics restobar',
+        'selvaggio pizzeria': 'selvaggio panaderia',
+        'selvaggio pizzaria': 'selvaggio panaderia',
+        'restaurante peluqueria francesa': 'boulevard lavaud restaurant',
+        'restauran peluqueria francesa': 'boulevard lavaud restaurant',
+        'restaurant peluqueria francesa': 'boulevard lavaud restaurant',
+        'un cafe y algomas': 'un cafe y algo mas'
+    };
+
+    function normalizeBreakText(str) {
+        return (str || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     /**
      * Elige una cafetería, un restaurante y una heladería cerca de un hito,
      * según la distancia CAMINANDO por las calles (no en línea recta).
@@ -316,10 +346,10 @@ ConectaYungay.Service = (function () {
      * se ha mostrado (desempate al azar), para repartir la promoción entre todos.
      * Orden de fuentes: tabla precalculada → servicio de rutas → línea recta.
      * Con línea recta marca "aproximada: true" para que la vista lo indique.
-     * @param {Object} node - Hito { name, lat, lng }
+     * @param {Object} node - Hito { name, lat, lng, breaks? }
      * @param {Array} discountsList - Lista de locales (ver getDiscounts)
      * @param {Object} [timesShown] - nombre del local → veces mostrado; se actualiza con los elegidos
-     * @returns {Promise<{cafeteria, restaurante, heladeria}>} cada uno con "distance" en metros
+     * @returns {Promise<{cafeteria, restaurante, heladeria}|Array>} locales con "distance" en metros
      */
     async function getClosestDiscounts(node, discountsList, timesShown = {}) {
         let distances = lookupWalkingDistances(node.name, discountsList);
@@ -333,6 +363,28 @@ ConectaYungay.Service = (function () {
                 distances = discountsList.map(p =>
                     calculateHaversineDistance(node.lat, node.lng, p.lat, p.lng));
             }
+        }
+
+        // Si el hito tiene definidos sus descansos específicos ("Date un break"), mostrarlos todos
+        if (node.breaks && Array.isArray(node.breaks) && node.breaks.length > 0) {
+            const mapped = [];
+            const seen = new Set();
+            node.breaks.forEach(breakName => {
+                const normTarget = normalizeBreakText(breakName);
+                const aliasTarget = BREAK_ALIASES[normTarget] || normTarget;
+                const local = discountsList.find(d => {
+                    const normD = normalizeBreakText(d.name);
+                    return normD === normTarget || normD === aliasTarget;
+                });
+                if (!local || seen.has(local.name)) return;
+                seen.add(local.name);
+                const index = discountsList.indexOf(local);
+                const dist = (distances && distances[index] !== null && Number.isFinite(distances[index]))
+                    ? Math.round(distances[index])
+                    : Math.round(calculateHaversineDistance(node.lat, node.lng, local.lat, local.lng));
+                mapped.push({ ...local, distance: dist, aproximada });
+            });
+            if (mapped.length > 0) return mapped;
         }
 
         const byCategory = { cafeterias: [], restaurantes: [], heladerias: [] };

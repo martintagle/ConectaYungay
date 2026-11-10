@@ -193,7 +193,7 @@ ConectaYungay.UI = (function () {
             }
 
             // Letra de la ruta ("Ruta A" → "A") para el círculo de la izquierda
-            const letra = ruta.nombre.replace(/^ruta\s+/i, '').charAt(0).toUpperCase();
+            const letra = (ruta.letra || (ruta.id && ruta.id.replace(/^ruta-/, '')) || ruta.nombre.replace(/^ruta\s+/i, '').charAt(0)).toUpperCase();
 
             const li = document.createElement('li');
             li.innerHTML = `
@@ -444,12 +444,28 @@ ConectaYungay.UI = (function () {
     // ─────────────────────────────────────────────
     function renderDiscountsUI(recs) {
         DOM.discountsContainer.innerHTML = '';
+        if (!recs) return;
 
-        const categories = [
-            { key: 'cafeteria', label: 'Cafetería', data: recs.cafeteria },
-            { key: 'restaurante', label: 'Restaurante', data: recs.restaurante },
-            { key: 'heladeria', label: 'Heladería', data: recs.heladeria }
-        ];
+        const categories = Array.isArray(recs)
+            ? recs.map(item => {
+                const catKey = item.category === 'restaurantes' ? 'restaurante'
+                    : item.category === 'heladerias' ? 'heladeria'
+                    : 'cafeteria';
+                const catLabel = catKey === 'restaurante' ? 'Restaurante'
+                    : catKey === 'heladeria' ? 'Heladería'
+                    : 'Cafetería';
+                return { key: catKey, label: catLabel, data: item };
+            })
+            : [
+                { key: 'cafeteria', label: 'Cafetería', data: recs.cafeteria },
+                { key: 'restaurante', label: 'Restaurante', data: recs.restaurante },
+                { key: 'heladeria', label: 'Heladería', data: recs.heladeria }
+            ];
+
+        if (!categories.length) {
+            DOM.discountsContainer.innerHTML = '<p class="placeholder-text">No hay locales registrados cerca de este hito.</p>';
+            return;
+        }
 
         categories.forEach(cat => {
             if (!cat.data) return;

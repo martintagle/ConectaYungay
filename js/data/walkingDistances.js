@@ -4,7 +4,7 @@
  *
  * ARCHIVO GENERADO: no editar a mano. Para actualizarlo ejecutar
  *     node tools/generar-distancias.js
- * Fuente: rutas peatonales de OpenStreetMap (OSRM). Generado el 2026-10-13.
+ * Fuente: rutas peatonales de OpenStreetMap (OSRM). Generado el 2026-11-10.
  */
 
 window.ConectaYungay = window.ConectaYungay || {};
@@ -29,7 +29,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 691,
         "Fuente Mardoqueo": 653,
         "Boulevard Lavaud Restaurant": 715,
-        "La Trova": 1044
+        "La Trova": 1044,
+        "Espacio 330": 558,
+        "Yungay Histórico": 691,
+        "Club Yungay": 1124
     },
     "Metro Cumming": {
         "La Tetería Cleopatra": 976,
@@ -49,7 +52,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 960,
         "Fuente Mardoqueo": 629,
         "Boulevard Lavaud Restaurant": 659,
-        "La Trova": 816
+        "La Trova": 816,
+        "Espacio 330": 981,
+        "Yungay Histórico": 960,
+        "Club Yungay": 748
     },
     "Cité Las Palmas": {
         "La Tetería Cleopatra": 560,
@@ -69,7 +75,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 807,
         "Fuente Mardoqueo": 768,
         "Boulevard Lavaud Restaurant": 831,
-        "La Trova": 1160
+        "La Trova": 1160,
+        "Espacio 330": 674,
+        "Yungay Histórico": 807,
+        "Club Yungay": 1189
     },
     "Pasaje Adriana Cousiño": {
         "La Tetería Cleopatra": 42,
@@ -89,7 +98,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 230,
         "Fuente Mardoqueo": 567,
         "Boulevard Lavaud Restaurant": 359,
-        "La Trova": 561
+        "La Trova": 561,
+        "Espacio 330": 166,
+        "Yungay Histórico": 230,
+        "Club Yungay": 645
     },
     "Cité Lucrecia Valdés de Barros Borgoño": {
         "La Tetería Cleopatra": 189,
@@ -109,7 +121,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 136,
         "Fuente Mardoqueo": 470,
         "Boulevard Lavaud Restaurant": 262,
-        "La Trova": 436
+        "La Trova": 436,
+        "Espacio 330": 162,
+        "Yungay Histórico": 136,
+        "Club Yungay": 516
     },
     "Casa de Ignacio Domeyko": {
         "La Tetería Cleopatra": 716,
@@ -129,7 +144,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 662,
         "Fuente Mardoqueo": 338,
         "Boulevard Lavaud Restaurant": 400,
-        "La Trova": 554
+        "La Trova": 554,
+        "Espacio 330": 721,
+        "Yungay Histórico": 662,
+        "Club Yungay": 546
     },
     "Plaza Yungay": {
         "La Tetería Cleopatra": 700,
@@ -149,7 +167,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 644,
         "Fuente Mardoqueo": 166,
         "Boulevard Lavaud Restaurant": 405,
-        "La Trova": 625
+        "La Trova": 625,
+        "Espacio 330": 705,
+        "Yungay Histórico": 644,
+        "Club Yungay": 675
     },
     "Peluquería Francesa": {
         "La Tetería Cleopatra": 309,
@@ -169,7 +190,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 254,
         "Fuente Mardoqueo": 232,
         "Boulevard Lavaud Restaurant": 8,
-        "La Trova": 317
+        "La Trova": 317,
+        "Espacio 330": 314,
+        "Yungay Histórico": 254,
+        "Club Yungay": 351
     },
     "Casa del Maestro": {
         "La Tetería Cleopatra": 822,
@@ -189,7 +213,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 806,
         "Fuente Mardoqueo": 480,
         "Boulevard Lavaud Restaurant": 506,
-        "La Trova": 662
+        "La Trova": 662,
+        "Espacio 330": 828,
+        "Yungay Histórico": 806,
+        "Club Yungay": 611
     },
     "Palacio Álamos": {
         "La Tetería Cleopatra": 1023,
@@ -209,7 +236,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 967,
         "Fuente Mardoqueo": 490,
         "Boulevard Lavaud Restaurant": 682,
-        "La Trova": 832
+        "La Trova": 832,
+        "Espacio 330": 1029,
+        "Yungay Histórico": 967,
+        "Club Yungay": 790
     },
     "Parroquia San Saturnino": {
         "La Tetería Cleopatra": 597,
@@ -229,7 +259,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 543,
         "Fuente Mardoqueo": 73,
         "Boulevard Lavaud Restaurant": 312,
-        "La Trova": 621
+        "La Trova": 621,
+        "Espacio 330": 603,
+        "Yungay Histórico": 543,
+        "Club Yungay": 633
     },
     "Iglesia de San Antonio de Padua": {
         "La Tetería Cleopatra": 897,
@@ -249,7 +282,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 881,
         "Fuente Mardoqueo": 550,
         "Boulevard Lavaud Restaurant": 580,
-        "La Trova": 737
+        "La Trova": 737,
+        "Espacio 330": 902,
+        "Yungay Histórico": 881,
+        "Club Yungay": 675
     },
     "Museo de la Memoria y los Derechos Humanos": {
         "La Tetería Cleopatra": 469,
@@ -269,7 +305,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 741,
         "Fuente Mardoqueo": 677,
         "Boulevard Lavaud Restaurant": 740,
-        "La Trova": 1113
+        "La Trova": 1113,
+        "Espacio 330": 583,
+        "Yungay Histórico": 741,
+        "Club Yungay": 1070
     },
     "Museo de la Educación Gabriela Mistral": {
         "La Tetería Cleopatra": 202,
@@ -289,7 +328,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 398,
         "Fuente Mardoqueo": 682,
         "Boulevard Lavaud Restaurant": 474,
-        "La Trova": 746
+        "La Trova": 746,
+        "Espacio 330": 334,
+        "Yungay Histórico": 398,
+        "Club Yungay": 818
     },
     "Museo del Sonido": {
         "La Tetería Cleopatra": 222,
@@ -309,7 +351,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 87,
         "Fuente Mardoqueo": 518,
         "Boulevard Lavaud Restaurant": 310,
-        "La Trova": 388
+        "La Trova": 388,
+        "Espacio 330": 113,
+        "Yungay Histórico": 87,
+        "Club Yungay": 474
     },
     "Espacio 330": {
         "La Tetería Cleopatra": 160,
@@ -329,7 +374,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 163,
         "Fuente Mardoqueo": 530,
         "Boulevard Lavaud Restaurant": 322,
-        "La Trova": 494
+        "La Trova": 494,
+        "Espacio 330": 0,
+        "Yungay Histórico": 163,
+        "Club Yungay": 577
     },
     "Museo Taller": {
         "La Tetería Cleopatra": 319,
@@ -349,7 +397,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 267,
         "Fuente Mardoqueo": 242,
         "Boulevard Lavaud Restaurant": 34,
-        "La Trova": 306
+        "La Trova": 306,
+        "Espacio 330": 324,
+        "Yungay Histórico": 267,
+        "Club Yungay": 347
     },
     "Yungay Histórico": {
         "La Tetería Cleopatra": 271,
@@ -369,7 +420,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 40,
         "Fuente Mardoqueo": 469,
         "Boulevard Lavaud Restaurant": 261,
-        "La Trova": 302
+        "La Trova": 302,
+        "Espacio 330": 162,
+        "Yungay Histórico": 0,
+        "Club Yungay": 388
     },
     "DecoCalen": {
         "La Tetería Cleopatra": 228,
@@ -389,7 +443,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 174,
         "Fuente Mardoqueo": 296,
         "Boulevard Lavaud Restaurant": 88,
-        "La Trova": 396
+        "La Trova": 396,
+        "Espacio 330": 234,
+        "Yungay Histórico": 174,
+        "Club Yungay": 439
     },
     "Casona Compañía": {
         "La Tetería Cleopatra": 283,
@@ -409,7 +466,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 228,
         "Fuente Mardoqueo": 277,
         "Boulevard Lavaud Restaurant": 69,
-        "La Trova": 378
+        "La Trova": 378,
+        "Espacio 330": 288,
+        "Yungay Histórico": 228,
+        "Club Yungay": 387
     },
     "Museo de Arte Contemporáneo (MAC)": {
         "La Tetería Cleopatra": 597,
@@ -429,7 +489,10 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 655,
         "Fuente Mardoqueo": 891,
         "Boulevard Lavaud Restaurant": 916,
-        "La Trova": 926
+        "La Trova": 926,
+        "Espacio 330": 591,
+        "Yungay Histórico": 655,
+        "Club Yungay": 1007
     },
     "Club Yungay": {
         "La Tetería Cleopatra": 697,
@@ -449,6 +512,9 @@ ConectaYungay.Data.DISTANCIAS_A_PIE = {
         "El Putamadre Restorant": 409,
         "Fuente Mardoqueo": 615,
         "Boulevard Lavaud Restaurant": 375,
-        "La Trova": 80
+        "La Trova": 80,
+        "Espacio 330": 588,
+        "Yungay Histórico": 409,
+        "Club Yungay": 0
     }
 };
