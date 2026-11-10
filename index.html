@@ -15,7 +15,7 @@
          ═══════════════════════════════════════════════════════════ -->
 
     <!-- 1. Forzar HTTPS (script externo para no necesitar 'unsafe-inline' en la CSP) -->
-    <script src="js/httpsRedirect.js"></script>
+    <script src="js/httpsRedirect.js?v=2"></script>
 
     <!-- 2. Content Security Policy (CSP)
          Permite únicamente los recursos externos necesarios para la app:
@@ -68,7 +68,7 @@
         rel="stylesheet">
 
     <!-- Estilos propios -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=2">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/logo_sin_fondo.png">
@@ -343,21 +343,21 @@
 
     <!-- Arquitectura N-Capas (orden de dependencias) -->
     <!-- 1. Datos — solo modelo: lugares, recorridos, descuentos y catálogos -->
-    <script src="js/data/places.js"></script>
-    <script src="js/data/routes.js"></script>
-    <script src="js/data/routeGeometries.js"></script>
-    <script src="js/data/discounts.js"></script>
-    <script src="js/data/walkingDistances.js"></script>
-    <script src="js/data/surveyCatalogs.js"></script>
+    <script src="js/data/places.js?v=2"></script>
+    <script src="js/data/routes.js?v=2"></script>
+    <script src="js/data/routeGeometries.js?v=2"></script>
+    <script src="js/data/discounts.js?v=2"></script>
+    <script src="js/data/walkingDistances.js?v=2"></script>
+    <script src="js/data/surveyCatalogs.js?v=2"></script>
     <!-- 2. Negocio — consultas, filtros, distancias y registro de visitas (api/registrar.php) -->
-    <script src="js/business/routeService.js"></script>
-    <script src="js/business/visitService.js"></script>
+    <script src="js/business/routeService.js?v=2"></script>
+    <script src="js/business/visitService.js?v=2"></script>
     <!-- 3. Presentación — vistas; solo llaman a la capa de negocio -->
-    <script src="js/presentation/securityUtils.js"></script>
-    <script src="js/presentation/mapRenderer.js"></script>
-    <script src="js/presentation/surveyPanel.js"></script>
-    <script src="js/presentation/placeInfoPanel.js"></script>
-    <script src="js/presentation/uiController.js"></script>
+    <script src="js/presentation/securityUtils.js?v=2"></script>
+    <script src="js/presentation/mapRenderer.js?v=2"></script>
+    <script src="js/presentation/surveyPanel.js?v=2"></script>
+    <script src="js/presentation/placeInfoPanel.js?v=2"></script>
+    <script src="js/presentation/uiController.js?v=2"></script>
 </body>
 
 </html>
